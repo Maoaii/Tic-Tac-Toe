@@ -1,0 +1,27 @@
+:root {
+    --tile-size: 100px;
+    --tile-color: #ff8000;
+    --tile-border-color: #ac5601;
+}
+
+main {
+    display: flex;
+    place-content: center;
+}
+
+.tile {
+    display: flex;
+    background-color: var(--tile-color);
+    border: 10px ridge var(--tile-border-color);
+    align-items: center;
+    justify-content: center;
+    font-size: 50px;
+    border-radius: 10px;
+}
+
+#game-container {
+    display: grid;
+    grid-template-columns: repeat(3, var(--tile-size));
+    grid-template-rows: repeat(3, var(--tile-size));   
+    gap: 2px;
+}
