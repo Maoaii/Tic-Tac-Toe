@@ -68,12 +68,13 @@ const game = (() => {
     };
 
     const playTurn = (event) => {
-        const tileIndex = event.target.getAttribute("data-index");
+        const tile = event.target;
+        const tileIndex = tile.getAttribute("data-index");
         let symbol = "";
         isPlayer1Turn() ? symbol = player1.getSymbol() : symbol = player2.getSymbol();
 
         // Update board with new play
-        updateBoard(symbol, tileIndex, event.target)
+        updateBoard(symbol, tileIndex, tile)
 
         // Update turn count
         turn++;
@@ -82,7 +83,7 @@ const game = (() => {
         gameboard.printBoard();
         
         // Check if game is over
-
+        checkGameOver();
     };
 
     const updateBoard = (symbol, index, tile) => {
@@ -104,6 +105,15 @@ const game = (() => {
 
         // Reset gameboard
         gameboard.resetBoard();
+    };
+
+    const checkGameOver = () => {
+        // Check rows
+        
+        // Check columns
+        
+        // Check diagonals
+        
     };
 
     const isGameFinished = () => turn >= 9;
