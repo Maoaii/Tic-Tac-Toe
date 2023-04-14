@@ -1,0 +1,6 @@
+- Display text for win
+- Display text for turn
+- Stop game when someone wins (or loses)
+- Disable "Play" and "versus" buttons when game starts
+    - Enable when "restart" is pressed 
+- Disable putting stuff on squares until play button is pressed
