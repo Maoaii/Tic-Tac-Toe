@@ -1,44 +1,116 @@
-const Player = (name) => {
+const Player = (name, symbol) => {
     const getName = () => name;
+    const getSymbol = () => symbol;
 
     return {
         getName,
+        getSymbol,
     }
 };
 
 const game = (() => {
     const gameContainer = document.getElementById("game-container");
-    const human = Player("human");
-    const bot = Player("bot");
+    const player1 = Player("human1", "X");
+    const player2 = Player("human2", "O");
+    let turn = 0;
     
 
     const gameboard = (() => {
         let gameboard = [
-            "O", "O", "O",
-            "O", "O", "O",
-            "O", "O", "O",
+            "", "", "",
+            "", "", "",
+            "", "", "",
         ];
     
         const display = () => {
+            let index = 0;
             gameboard.forEach((tile) => {
-                const tileElement = document.createElement("div");
+                const tileElement = document.createElement("button");
+
                 tileElement.classList.add("tile");
+
+                tileElement.setAttribute("data-index", index++)
+
                 tileElement.textContent = tile;
+
                 gameContainer.appendChild(tileElement)
             });
         };
+
+        const changeTile = (index, symbol) => gameboard[index] = symbol;
+
+        const printBoard = () => console.log(gameboard);
+
+        const resetBoard = () => gameboard = [
+            "", "", "",
+            "", "", "",
+            "", "", "",
+        ];
     
         return {
             display,
+            changeTile,
+            resetBoard,
+            printBoard,
         };
     })();
     
 
     const displayBoard = () => gameboard.display();
 
+    const initGame = () => {
+        // Add event listeners to tiles
+        const tiles = document.querySelectorAll(".tile");
+        tiles.forEach(tile => tile.addEventListener("click", playTurn));
+
+        // Reset game
+        resetGame()
+    };
+
+    const playTurn = (event) => {
+        const tileIndex = event.target.getAttribute("data-index");
+
+        let symbol = "";
+        isPlayer1Turn() ? symbol = player1.getSymbol() : symbol = player2.getSymbol();
+
+        updateBoard(symbol, tileIndex, event.target)
+        turn++;
+        gameboard.printBoard();
+    };
+
+    const updateBoard = (symbol, index, tile) => {
+        if (tile.textContent === "") {
+            tile.textContent = symbol;
+            gameboard.changeTile(index, symbol);
+        }
+    }
+
+    const isPlayer1Turn = () => turn % 2 === 0;
+
+    const resetGame = () => {
+        // Reset tiles
+        const tiles = document.querySelectorAll(".tile");
+        tiles.forEach(tile => tile.textContent = "");
+
+        // Reset turn
+        turn = 0;
+
+        // Reset gameboard
+        gameboard.resetBoard();
+    };
+
+    const isGameFinished = () => turn >= 9;
+
     return {
         displayBoard,
+        initGame,
+        resetGame,
+        isGameFinished,
     };
 })();
 
+const reset = document.getElementById("reset");
+reset.addEventListener("click", game.resetGame)
+
 game.displayBoard();
+game.initGame();
