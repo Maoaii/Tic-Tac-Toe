@@ -69,13 +69,20 @@ const game = (() => {
 
     const playTurn = (event) => {
         const tileIndex = event.target.getAttribute("data-index");
-
         let symbol = "";
         isPlayer1Turn() ? symbol = player1.getSymbol() : symbol = player2.getSymbol();
 
+        // Update board with new play
         updateBoard(symbol, tileIndex, event.target)
+
+        // Update turn count
         turn++;
+        
+        // DEBUG
         gameboard.printBoard();
+        
+        // Check if game is over
+
     };
 
     const updateBoard = (symbol, index, tile) => {
