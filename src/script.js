@@ -9,7 +9,6 @@ const Player = (name, symbol) => {
 };
 
 const game = (() => {
-    const gameContainer = document.getElementById("game-container");
     const player1 = Player("human1", "X");
     const player2 = Player("human2", "O");
     const magicBoard = [
@@ -20,9 +19,8 @@ const game = (() => {
 
     let turn = 0;
 
-    
-
     const gameboard = (() => {
+        const gameContainer = document.getElementById("game-container");
         let gameboard = [
             ["", "", ""],
             ["", "", ""],
@@ -46,21 +44,19 @@ const game = (() => {
                     tileElement.textContent = tile;
     
                     gameContainer.appendChild(tileElement)
-
+    
                     colIndex++;
                 })
                 rowIndex++;
             });
         };
-
+    
         const getRow = (rowIndex) => gameboard[rowIndex];
-
-        const getCol = (colIndex) => gameboard[colIndex];
-
+    
         const changeTile = (row, col, symbol) => gameboard[row][col] = symbol;
-
+    
         const printBoard = () => console.log(gameboard);
-
+    
         const resetBoard = () => gameboard = [
             ["", "", ""],
             ["", "", ""],
@@ -70,21 +66,22 @@ const game = (() => {
         return {
             display,
             getRow,
-            getCol,
             changeTile,
             resetBoard,
             printBoard,
         };
     })();
-    
 
-    const displayBoard = () => gameboard.display();
+    const displayBoard = () => {
+        gameboard.display();
 
-    const initGame = () => {
         // Add event listeners to tiles
         const tiles = document.querySelectorAll(".tile");
         tiles.forEach(tile => tile.addEventListener("click", playTurn));
+    }
 
+    const initGame = () => {
+        
         // Reset game
         resetGame()
     };
@@ -133,22 +130,19 @@ const game = (() => {
         let sums = [];
         
         // Calculate rows
-        let rowSum = calculateRow(gameboard.getRow(rowIndex), rowIndex);
-        sums.push(rowSum);
+        sums.push(calculateRow(gameboard.getRow(rowIndex), rowIndex));
         
         // Calculate columns
-        let colSum = calculateCol(colIndex);
-        sums.push(colSum);
+        sums.push(calculateCol(colIndex));
         
-        // Calculate diagonals
+        // Calculate diagonal
         if (rowIndex == colIndex) {
-            let diagSum = calculateDiag();
-            sums.push(diagSum);
+            sums.push(calculateDiag());
         }
 
+        // Calculate anti diagonal
         if ((+rowIndex + +colIndex) === 2) {
-            let antiDiagSum = calculateAntiDiag();
-            sums.push(antiDiagSum);
+            sums.push(calculateAntiDiag());
         }
 
         // Check if there's any calculation (= 15 || = -15)
@@ -163,12 +157,12 @@ const game = (() => {
     const calculateRow = (row, rowIndex) => {
         let rowSum = 0;
 
-        for (let col = 0; col < 3; col++) {
+        for (let colIndex = 0; colIndex < 3; colIndex++) {
 
-            if (row[col] === "X")
-                rowSum += magicBoard[rowIndex][col]
-            else if (row[col] === "O")
-                rowSum -= magicBoard[rowIndex][col]
+            if (row[colIndex] === player1.getSymbol())
+                rowSum += magicBoard[rowIndex][colIndex]
+            else if (row[colIndex] === player2.getSymbol())
+                rowSum -= magicBoard[rowIndex][colIndex]
         }
 
         return rowSum;
@@ -177,13 +171,13 @@ const game = (() => {
     const calculateCol = (colIndex) => {
         let colSum = 0;
 
-        for (let r = 0; r < 3; r++) {
-            const row = gameboard.getRow(r);
+        for (let rowIndex = 0; rowIndex < 3; rowIndex++) {
+            const row = gameboard.getRow(rowIndex);
 
-            if (row[colIndex] === "X")
-                colSum += magicBoard[r][colIndex];
-            else if (row[colIndex] === "O")
-                colSum -= magicBoard[r][colIndex];
+            if (row[colIndex] === player1.getSymbol())
+                colSum += magicBoard[rowIndex][colIndex];
+            else if (row[colIndex] === player2.getSymbol())
+                colSum -= magicBoard[rowIndex][colIndex];
         }
 
         return colSum;
@@ -195,9 +189,9 @@ const game = (() => {
         for (let i = 0; i < 3; i++) {
             const row = gameboard.getRow(i);
 
-            if (row[i] === "X")
+            if (row[i] === player1.getSymbol())
                 diagSum += magicBoard[i][i];
-            else if (row[i] === "O")
+            else if (row[i] === player2.getSymbol())
                 diagSum -= magicBoard[i][i];
         }
 
@@ -211,9 +205,9 @@ const game = (() => {
         for (let rowIndex = 0; rowIndex < 3; rowIndex++) {
             const row = gameboard.getRow(rowIndex);
 
-            if (row[colIndex] === "X")
+            if (row[colIndex] === player1.getSymbol())
                 antiDiagSum += magicBoard[rowIndex][colIndex];
-            else if (row[colIndex] === "O")
+            else if (row[colIndex] === player2.getSymbol())
                 antiDiagSum -= magicBoard[rowIndex][colIndex];
             
             colIndex--;

@@ -1,31 +1,187 @@
+/* http://meyerweb.com/eric/tools/css/reset/ 
+   v2.0 | 20110126
+   License: none (public domain)
+*/
+
+html, body, div, span, applet, object, iframe,
+h1, h2, h3, h4, h5, h6, p, blockquote, pre,
+a, abbr, acronym, address, big, cite, code,
+del, dfn, em, img, ins, kbd, q, s, samp,
+small, strike, strong, sub, sup, tt, var,
+b, u, i, center,
+dl, dt, dd, ol, ul, li,
+fieldset, form, label, legend,
+table, caption, tbody, tfoot, thead, tr, th, td,
+article, aside, canvas, details, embed, 
+figure, figcaption, footer, header, hgroup, 
+menu, nav, output, ruby, section, summary,
+time, mark, audio, video {
+	margin: 0;
+	padding: 0;
+	border: 0;
+	font-size: 100%;
+	font: inherit;
+	vertical-align: baseline;
+}
+/* HTML5 display-role reset for older browsers */
+article, aside, details, figcaption, figure, 
+footer, header, hgroup, menu, nav, section {
+	display: block;
+}
+body {
+	line-height: 1;
+}
+ol, ul {
+	list-style: none;
+}
+blockquote, q {
+	quotes: none;
+}
+blockquote:before, blockquote:after,
+q:before, q:after {
+	content: '';
+	content: none;
+}
+table {
+	border-collapse: collapse;
+	border-spacing: 0;
+}
+
 :root {
     --tile-size: 100px;
     --tile-color: #ff8000;
     --tile-border-color: #ac5601;
+    --bg-color: #fcfbf8;
+    --light-beige: #F9F5EB;
+    --beige: #E4DCCF;
+    --dark-beige: #a39a8d;
+    --orange-red: #EA5455;
+    --dark-blue: #002B5B;
+}
+
+a {
+    color: var(--orange-red);
+    text-decoration: none;
+    font-weight: bold;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+body {
+    display: flex;
+	flex-direction: column;
+	min-height: 100vh;
+    font-family: 'Roboto', sans-serif;
+}
+
+header {
+    background-color: var(--beige);
+    border-bottom: 5px solid var(--dark-beige);
+}
+
+h1 {
+    font-size: 5rem;
+    text-align: center;
+    padding: 10px;
+    color: var(--dark-blue);
+}
+
+h2 {
+    font-size: 2rem;
+    text-align: center;
+    padding: 10px;
+    color: var(--dark-blue);
 }
 
 main {
     display: flex;
+    flex-direction: column;
     place-content: center;
+    align-items: center;
+    background-color: var(--light-beige);
+    flex-grow: 1;
+}
+
+footer {
+    background-color: var(--beige);
+    text-align: center;
+    padding: 10px;
+    color: var(--dark-blue);
+    border-top: 5px solid var(--dark-beige);
+}
+
+#controls > fieldset > label {
+    font-size: 1.2rem;
+    color: var(--dark-blue);
+    margin-right: 5px;
+}
+
+#controls > button {
+    width: 100%;
+}
+
+#controls > button, select {
+    cursor: pointer;
+    background-color: var(--dark-blue);
+    color: var(--bg-color);
+    border: none;
+    border-radius: 5px;
+    font-size: 1rem;
+    padding: 10px;
+    margin: 10px 0px;
+    text-align: center;
+}
+
+#controls > button:hover, select:hover {
+    background-color: var(--orange-red);
+}
+#controls > button:focus-visible, select:focus-visible {
+    background-color: var(--orange-red);
+    outline: none;
+}
+
+#controls > button:active , select:active {
+    background-color: var(--dark-blue);
+}
+
+#reset {
+    background-color: var(--orange-red);
+    color: var(--bg-color);
 }
 
 .tile {
     display: flex;
-    background-color: var(--tile-color);
-    border: 10px ridge var(--tile-border-color);
+    background-color: var(--beige);
     align-items: center;
     justify-content: center;
     font-size: 50px;
-    border-radius: 10px;
+    color: var(--dark-blue);
+    border: 1px solid var(--dark-beige);
+    font-weight: bold;
 }
 
 .tile:hover {
     cursor: pointer;
+    border: 3px solid var(--orange-red);
+}
+
+.tile:focus-visible {
+    outline: none;
+    border: 3px solid var(--orange-red);
 }
 
 #game-container {
     display: grid;
     grid-template-columns: repeat(3, var(--tile-size));
-    grid-template-rows: repeat(3, var(--tile-size));   
-    gap: 2px;
+    grid-template-rows: repeat(3, var(--tile-size));
+    border: 3px solid var(--dark-beige);
+}
+
+#controls {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 300px;
 }
