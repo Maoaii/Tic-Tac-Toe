@@ -62,12 +62,18 @@ const game = (() => {
             ["", "", ""],
             ["", "", ""],
         ];
+
+        const disableTiles = () => {
+            const tiles = document.querySelectorAll(".tile");
+            tiles.forEach(tile => tile.classList.toggle("disabled"));
+        };
     
         return {
             display,
             getRow,
             changeTile,
             resetBoard,
+            disableTiles,
             printBoard,
         };
     })();
@@ -125,7 +131,10 @@ const game = (() => {
     const resetGame = () => {
         // Reset tiles
         const tiles = document.querySelectorAll(".tile");
-        tiles.forEach(tile => tile.textContent = "");
+        tiles.forEach(tile => {
+            tile.textContent = ""
+            tile.classList.toggle("disabled");
+        });
 
         // Reset turn
         turn = 0;
@@ -137,6 +146,7 @@ const game = (() => {
         const versus = document.querySelector("#versus");
         versus.classList.remove("disabled");
         versus.disabled = false;
+
     };
 
     const checkGameOver = (rowIndex, colIndex) => {
@@ -160,11 +170,24 @@ const game = (() => {
 
         // Check if there's any calculation (= 15 || = -15)
         sums.forEach(sum => {
-            if (sum === 15)
-                console.log("X won");
-            else if (sum === -15)
-                console.log("O won");
+            switch (sum) {
+                case 15:
+                    // Disable tiles
+                    gameboard.disableTiles();
+                    
+                    break;
+                case -15:
+                    gameboard.disableTiles();
+
+                    break;
+                default:
+                    break;
+            }
         });
+
+        if (isGameFinished()) {
+            gameboard.disableTiles();
+        }
     };
 
     const calculateRow = (row, rowIndex) => {

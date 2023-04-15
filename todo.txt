@@ -1,3 +1,2 @@
 - Display text for win
 - Display text for turn
-- Stop game when someone wins (or loses)
