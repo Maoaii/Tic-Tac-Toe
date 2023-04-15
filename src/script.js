@@ -10,8 +10,8 @@ const Player = (name, symbol) => {
 
 const game = (() => {
     const gameContainer = document.getElementById("game-container");
-    const player1 = Player("human1", "X");
-    const player2 = Player("human2", "O");
+    const player1 = Player("Player1", "X");
+    const player2 = Player("Player2", "O");
     const magicBoard = [
         [2, 7, 6],
         [9, 5, 1],
@@ -105,6 +105,13 @@ const game = (() => {
         if (tile.textContent === "") {
             // Update board with new play
             updateBoard(symbol, tileRow, tileCol, tile);
+
+            // Update turn text
+            const text = document.querySelector("#turn-text");
+            if (symbol === player1.getSymbol())
+                text.textContent = `${player2.getName()}'s turn`;
+            else 
+                text.textContent = `${player1.getName()}'s turn`;
             
             // Update turn count
             turn++;
@@ -133,7 +140,7 @@ const game = (() => {
         const tiles = document.querySelectorAll(".tile");
         tiles.forEach(tile => {
             tile.textContent = ""
-            tile.classList.toggle("disabled");
+            tile.classList.remove("disabled");
         });
 
         // Reset turn
@@ -147,6 +154,9 @@ const game = (() => {
         versus.classList.remove("disabled");
         versus.disabled = false;
 
+        // Reset turn text
+        const text = document.querySelector("#turn-text");
+        text.textContent = `${player1.getName()}'s turn`;
     };
 
     const checkGameOver = (rowIndex, colIndex) => {
@@ -169,24 +179,35 @@ const game = (() => {
         }
 
         // Check if there's any calculation (= 15 || = -15)
+        let winner = "";
         sums.forEach(sum => {
             switch (sum) {
                 case 15:
-                    // Disable tiles
-                    gameboard.disableTiles();
-                    
+                    winner = player1.getName();
                     break;
                 case -15:
-                    gameboard.disableTiles();
-
+                    winner = player2.getName();
                     break;
                 default:
                     break;
             }
         });
 
-        if (isGameFinished()) {
+        if (isGameFinished() || winner !== "") {
             gameboard.disableTiles();
+            showWinner(winner);
+        }
+        
+    };
+
+    const showWinner = (winner) => {
+        const text = document.querySelector("#turn-text");
+
+        if (winner === "") {
+            text.textContent = "It's a draw!"
+        }
+        else {
+            text.textContent = `Player ${winner} won!`;
         }
     };
 
@@ -265,3 +286,4 @@ const reset = document.getElementById("reset");
 reset.addEventListener("click", game.resetGame)
 
 game.displayBoard();
+game.initGame();
