@@ -65,7 +65,10 @@ const game = (() => {
 
         const disableTiles = () => {
             const tiles = document.querySelectorAll(".tile");
-            tiles.forEach(tile => tile.classList.toggle("disabled"));
+            tiles.forEach(tile =>  {
+                tile.disabled = true;
+                tile.classList.toggle("disabled")
+            });
         };
     
         return {
@@ -87,9 +90,14 @@ const game = (() => {
     }
 
     const initGame = () => {
+        setupOpponent();
 
         // Reset game
         resetGame();
+    };
+
+    const setupOpponent = () => {
+        const opponent = document.getElementById("versus");
     };
 
     const playTurn = (event) => {
@@ -139,7 +147,8 @@ const game = (() => {
         // Reset tiles
         const tiles = document.querySelectorAll(".tile");
         tiles.forEach(tile => {
-            tile.textContent = ""
+            tile.textContent = "";
+            tile.disabled = false;
             tile.classList.remove("disabled");
         });
 
@@ -207,7 +216,7 @@ const game = (() => {
             text.textContent = "It's a draw!"
         }
         else {
-            text.textContent = `Player ${winner} won!`;
+            text.textContent = `${winner} won!`;
         }
     };
 
@@ -279,11 +288,15 @@ const game = (() => {
         displayBoard,
         initGame,
         resetGame,
+        setupOpponent,
     };
 })();
 
 const reset = document.getElementById("reset");
 reset.addEventListener("click", game.resetGame)
+
+const opponent = document.getElementById("versus");
+opponent.addEventListener("change", game.setupOpponent);
 
 game.displayBoard();
 game.initGame();
