@@ -142,7 +142,7 @@ footer {
     outline: none;
 }
 
-#controls > button:active , select:active {
+#controls > button:active, select:active {
     background-color: var(--dark-blue);
 }
 
@@ -184,4 +184,9 @@ footer {
     flex-direction: column;
     align-items: center;
     width: 300px;
+}
+
+.disabled {
+    pointer-events: none;
+    opacity: 0.5;
 }

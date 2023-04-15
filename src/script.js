@@ -9,6 +9,7 @@ const Player = (name, symbol) => {
 };
 
 const game = (() => {
+    const gameContainer = document.getElementById("game-container");
     const player1 = Player("human1", "X");
     const player2 = Player("human2", "O");
     const magicBoard = [
@@ -20,7 +21,6 @@ const game = (() => {
     let turn = 0;
 
     const gameboard = (() => {
-        const gameContainer = document.getElementById("game-container");
         let gameboard = [
             ["", "", ""],
             ["", "", ""],
@@ -81,9 +81,9 @@ const game = (() => {
     }
 
     const initGame = () => {
-        
+
         // Reset game
-        resetGame()
+        resetGame();
     };
 
     const playTurn = (event) => {
@@ -92,18 +92,26 @@ const game = (() => {
         const tileCol = tile.getAttribute("data-col");
         let symbol = "";
 
+        
         isPlayer1Turn() ? symbol = player1.getSymbol() : symbol = player2.getSymbol();
-
-
+        
+        
         if (tile.textContent === "") {
             // Update board with new play
             updateBoard(symbol, tileRow, tileCol, tile);
-    
+            
             // Update turn count
             turn++;
-
+            
             // Check if game is over
             checkGameOver(tileRow, tileCol);
+        }
+
+        if (turn > 0) {
+            // Disable versus selection
+            const versus = document.querySelector("#versus");
+            versus.classList.add("disabled");
+            versus.disabled = true;
         }
     };
 
@@ -124,6 +132,11 @@ const game = (() => {
 
         // Reset gameboard
         gameboard.resetBoard();
+
+        // Reset versus selection
+        const versus = document.querySelector("#versus");
+        versus.classList.remove("disabled");
+        versus.disabled = false;
     };
 
     const checkGameOver = (rowIndex, colIndex) => {
@@ -229,4 +242,3 @@ const reset = document.getElementById("reset");
 reset.addEventListener("click", game.resetGame)
 
 game.displayBoard();
-game.initGame();
