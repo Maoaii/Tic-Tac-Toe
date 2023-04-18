@@ -9,6 +9,11 @@ const Player = (name, symbol) => {
 };
 
 const game = (() => {
+    const playerOpponent = "player";
+    const easyOpponent = "easy";
+    const hardOpponent = "hard";
+    const unbeatableOpponent = "unbeatable";
+
     const gameContainer = document.getElementById("game-container");
     const player1 = Player("Player1", "X");
     const player2 = Player("Player2", "O");
@@ -18,6 +23,7 @@ const game = (() => {
         [4, 3, 8],
     ];
 
+    let currentOpponent = "";
     let turn = 0;
 
     const gameboard = (() => {
@@ -96,45 +102,100 @@ const game = (() => {
         resetGame();
     };
 
+    
+
     const setupOpponent = () => {
-        const opponent = document.getElementById("versus");
+        currentOpponent = document.getElementById("versus").value;;
     };
 
     const playTurn = (event) => {
         const tile = event.target;
         const tileRow = tile.getAttribute("data-row");
         const tileCol = tile.getAttribute("data-col");
-        let symbol = "";
+        let symbol = isPlayer1Turn() ? player1.getSymbol() : player2.getSymbol();;
 
-        
-        isPlayer1Turn() ? symbol = player1.getSymbol() : symbol = player2.getSymbol();
-        
-        
         if (tile.textContent === "") {
-            // Update board with new play
-            updateBoard(symbol, tileRow, tileCol, tile);
-
-            // Update turn text
-            const text = document.querySelector("#turn-text");
-            if (symbol === player1.getSymbol())
-                text.textContent = `${player2.getName()}'s turn`;
-            else 
-                text.textContent = `${player1.getName()}'s turn`;
-            
-            // Update turn count
-            turn++;
-            
-            // Check if game is over
-            checkGameOver(tileRow, tileCol);
+            makePlay(symbol, tileRow, tileCol, tile);
+            endTurn(tileRow, tileCol);
         }
-
-        if (turn > 0) {
-            // Disable versus selection
-            const versus = document.querySelector("#versus");
-            versus.classList.add("disabled");
-            versus.disabled = true;
-        }
+        if (turn > 0)
+            disableVersusSelection();
     };
+
+    const disableVersusSelection = () => {
+        const versus = document.querySelector("#versus");
+        versus.classList.add("disabled");
+        versus.disabled = true;
+    }
+    
+    const botTurn = () => {
+        switch(currentOpponent) {
+            case easyOpponent:
+                // Store index of all free spaces
+                let freeSpaces = [];
+                for (let i = 0; i < 3; i++) {
+                    let row = gameboard.getRow(i);
+
+                    for (let j = 0; j < 3; j++) {
+                        if (row[j] === "")
+                            freeSpaces.push({row: i, col: j});
+                    }
+                }
+
+                // Choose an index randomly
+                let choosenSquare = freeSpaces[Math.floor(Math.random() * freeSpaces.length)];
+
+                // Make a play on the square with that index
+                const tile = document.querySelector(
+                    `button[data-row='${choosenSquare["row"]}'][data-col='${choosenSquare["col"]}']`
+                    );
+
+                makePlay(player2.getSymbol(), choosenSquare["row"], choosenSquare["col"], tile);
+                endTurn(choosenSquare["row"], choosenSquare["col"]);
+                
+                break;
+
+            case hardOpponent:
+                break
+
+            case unbeatableOpponent:
+                break;
+
+            default:
+                console.log("botTurn: oopsie!");
+                break;
+        }
+    }
+
+    const makePlay = (symbol, row, col, tile) => {
+        updateBoard(symbol, row, col, tile)
+        gameboard.changeTile(row, col, symbol);
+    };
+
+    const endTurn = (row, col) => {
+        turn++;
+
+        updateTurnText();        
+
+        // Check if game is over
+        if (isGameOver(row, col))
+            return;
+        else if (!isPlayer1Turn() && playingAgainstBot()) {
+            botTurn();
+        }
+    }
+
+    const playingAgainstBot = () => {
+        return currentOpponent != playerOpponent;
+    }
+    
+    const updateTurnText = () => {
+        const text = document.querySelector("#turn-text");
+        if (isPlayer1Turn())
+            text.textContent = `${player1.getName()}'s turn`;
+        else 
+            text.textContent = `${player2.getName()}'s turn`;
+    }
 
     const updateBoard = (symbol, rowIndex, colIndex, tile) => {
         tile.textContent = symbol;
@@ -168,7 +229,7 @@ const game = (() => {
         text.textContent = `${player1.getName()}'s turn`;
     };
 
-    const checkGameOver = (rowIndex, colIndex) => {
+    const isGameOver = (rowIndex, colIndex) => {
         let sums = [];
         
         // Calculate rows
@@ -205,8 +266,10 @@ const game = (() => {
         if (isGameFinished() || winner !== "") {
             gameboard.disableTiles();
             showWinner(winner);
+            return true;
         }
-        
+
+        return false;
     };
 
     const showWinner = (winner) => {
