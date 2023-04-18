@@ -133,23 +133,20 @@ const game = (() => {
             case easyOpponent:
                 // Store index of all free spaces
                 let freeSpaces = [];
-                for (let i = 0; i < 3; i++) {
-                    let row = gameboard.getRow(i);
+                for (let rowIndex = 0; rowIndex < 3; rowIndex++) {
+                    let row = gameboard.getRow(rowIndex);
 
-                    for (let j = 0; j < 3; j++) {
-                        if (row[j] === "")
-                            freeSpaces.push({row: i, col: j});
+                    for (let colIndex = 0; colIndex < 3; colIndex++) {
+                        if (row[colIndex] === "")
+                            freeSpaces.push({row: rowIndex, col: colIndex});
                     }
                 }
 
-                // Choose an index randomly
+                // Choose an free space randomly
                 let choosenSquare = freeSpaces[Math.floor(Math.random() * freeSpaces.length)];
-
+                const tile = document.querySelector(`button[data-row='${choosenSquare["row"]}'][data-col='${choosenSquare["col"]}']`);
+                
                 // Make a play on the square with that index
-                const tile = document.querySelector(
-                    `button[data-row='${choosenSquare["row"]}'][data-col='${choosenSquare["col"]}']`
-                    );
-
                 makePlay(player2.getSymbol(), choosenSquare["row"], choosenSquare["col"], tile);
                 endTurn(choosenSquare["row"], choosenSquare["col"]);
                 
@@ -159,6 +156,8 @@ const game = (() => {
                 break
 
             case unbeatableOpponent:
+                // Minmax boooooooy
+
                 break;
 
             default:
