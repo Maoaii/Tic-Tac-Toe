@@ -25,6 +25,7 @@ const game = (() => {
 
     let currentOpponent = "";
     let turn = 0;
+    let bestMove = null;
 
     const gameboard = (() => {
         let gameboard = [
@@ -137,7 +138,7 @@ const game = (() => {
                 // Store index of all free spaces
                 let possibleMoves = getPossibleMoves(gameboard.getBoard());
 
-                // Choose an free space randomly
+                // Choose a free space randomly
                 let choosenSquare = possibleMoves[Math.floor(Math.random() * possibleMoves.length)];
                 const tile = document.querySelector(`button[data-row='${choosenSquare["row"]}'][data-col='${choosenSquare["col"]}']`);
                 
@@ -151,19 +152,61 @@ const game = (() => {
                 break
 
             case unbeatableOpponent:
-                // Call minmax function and get a list of scores
-                minmax(gameboard.getBoard(), isPlayer1Turn() ? player1.getSymbol() : player2.getSymbol(), 0);
+                const board = gameboard.getBoard();
+                let bestScore = -Infinity;
+                let bestMove;
 
-                // Choose the score/play that matches the best play for the current player
-                
+                getPossibleMoves(board).forEach(move => {
+                    board[move["row"]][move["col"]] = player2.getSymbol();
+                    let score = minimax(board, 0, false);
+                    board[move["row"]][move["col"]] = "";
+                    if (score > bestScore) {
+                        bestScore = score;
+                        bestMove = move;
+                    }
+                });
 
-                // Make play
+                const tileAI = document.querySelector(`button[data-row='${bestMove["row"]}'][data-col='${bestMove["col"]}']`);
+
+                makePlay(player2.getSymbol(), bestMove["row"], bestMove["col"], tileAI);
+                endTurn(bestMove["row"], bestMove["col"]);
 
                 break;
                 
             default:
                 console.log("botTurn: oopsie!");
             break;
+        }
+    }
+
+    const minimax = (boardState, depth, isMaximizing) => {
+        // Check if anyone won
+        let result = checkWinner(boardState);
+        if (result !== 0) {
+            return result;
+        }
+
+        if (isMaximizing) {
+            let bestScore = -Infinity;
+            getPossibleMoves(boardState).forEach(move => {
+                boardState[move["row"]][move["col"]] = player2.getSymbol();
+                let score = minimax(boardState, depth + 1, false);
+                boardState[move["row"]][move["col"]] = "";
+                bestScore = Math.max(score, bestScore);
+            });
+
+            return bestScore;
+        } 
+        else {
+            let bestScore = Infinity;
+            getPossibleMoves(boardState).forEach(move => {
+                boardState[move["row"]][move["col"]] = player1.getSymbol();
+                let score = minimax(boardState, depth + 1, true);
+                boardState[move["row"]][move["col"]] = "";
+                bestScore = Math.min(score, bestScore);
+            });
+
+            return bestScore;
         }
     }
 
@@ -178,42 +221,6 @@ const game = (() => {
         }
 
         return freeSpaces;
-    }
-
-    // Given a board, checks if someone wins or there is a tie
-    const getNewGameState = (boardState, move, player) => {
-        boardState[move["row"]][move["col"]] = player;
-
-        return boardState;
-    }
-
-    const minmax = (boardState, player, depth) => {
-        // Check game over
-        // If over, return the score
-        const winner = checkWinner(boardState);
-        if (winner != 0 || isGameOver(boardState)) {
-            return winner;
-        }
-
-        let scores = [];
-        let moves = [];
-
-        // Get list of possible moves
-        const possibleMoves = getPossibleMoves(boardState);
-
-        // For each new move, run the minmax function and store the scores and moves
-        possibleMoves.forEach(move => {
-            const possibleGame = getNewGameState(boardState, move, player);
-            scores.push(minmax(possibleGame, isPlayer1Turn() ? player2.getSymbol() : player1.getSymbol(), depth + 1));
-            moves.push(move);
-        });
-
-        console.log(scores);
-        console.log(moves);
-
-        // Find the best play for current player
-
-        // Make play
     }
 
     const makePlay = (symbol, row, col, tile) => {
@@ -281,19 +288,34 @@ const game = (() => {
     const isGameOver = (boardState, rowIndex, colIndex) => {
         const winner = checkWinnerFromPlay(boardState, rowIndex, colIndex);
 
-        if (isTie() || winner !== 0) {
+        if (isTie(boardState) || winner !== 0) {
+            switch(winner) {
+                case 15:
+                    showWinner(player1.getName());
+                    break;
+                case -15:
+                    showWinner(player2.getName());
+                    break;
+                default:
+                    if (isTie(boardState)) {
+                        showWinner("");
+                    }
+                    break;
+    
+            }
             gameboard.disableTiles();
-            showWinner(winner === 15 ? player1.getName() : player2.getName());
+
             return true;
         }
 
         return false;
     };
 
+    // Returns 15 if player 1 wins, -15 if player 2 wins, 0 if no winner
     const checkWinner = (boardState) => {
         for (let i = 0; i < 3; i++) {
             for (let j = 0; j < 3; j++) {
-                const winner = checkWinnerFromPlay(boardState, i, j);
+                let winner = checkWinnerFromPlay(boardState, i, j);
                 if (winner != 0) {
                     return winner;
                 }
@@ -413,7 +435,18 @@ const game = (() => {
         return antiDiagSum;
     }
 
-    const isTie = () => turn >= 9;
+    const isTie = (boardState) => {
+        let occupied = 0;
+
+        for (let i = 0; i < 3; i++) {
+            for (let j = 0; j < 3; j++) {
+                if (boardState[i][j] !== "") {
+                    occupied++;
+                }
+            }
+        }
+        return occupied === 9;
+    };
 
     return {
         displayBoard,

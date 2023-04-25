@@ -1,8 +1,8 @@
 const board = 
 [
-    [0, 0, 0],
-    [0, 0, 0],
-    [0, 0, 0],
+    [1, 0, 0],
+    [1, -1, 0],
+    [0, 0, -1],
 ];
 
 function minmax(boardState, player, depth) {
@@ -15,30 +15,22 @@ function minmax(boardState, player, depth) {
     let moves = [];
     
     const possibleMoves = getPossibleMoves(boardState);
-    console.log(possibleMoves);
 
     possibleMoves.forEach(move => {
         const possibleGame = getNewBoardState(boardState, move, player);
         scores.push(minmax(possibleGame, (player * -1), depth + 1));
         moves.push(move);
     });
+
     
-    
-    console.log(scores);
-    console.log(moves);
 }
 
 function getNewBoardState(boardState, move, player) {
     const x = move[0];
     const y = move[1];
-
-    let newBoard = boardState;
+    // let newBoard = [...boardState];
+    let newBoard = boardState.map(row => [...row]); // create a copy of the board
     newBoard[x][y] = player;
-
-    console.log("new")
-    console.log(newBoard)
-    console.log("old")
-    console.log(boardState)
 
     return newBoard;
 }
@@ -129,5 +121,6 @@ function gameIsOver(boardState) {
 
     return occupied === 9;
 }
-
-minmax(board, 1, 0);
+console.log(board);
+console.log(minmax(board, 1, 0));
+console.log(board);
