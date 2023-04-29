@@ -152,19 +152,22 @@ const game = (() => {
                 break
 
             case unbeatableOpponent:
-                const board = gameboard.getBoard();
+                let board = gameboard.getBoard();
                 let bestScore = -Infinity;
                 let bestMove;
 
+                let i = 0;
                 getPossibleMoves(board).forEach(move => {
                     board[move["row"]][move["col"]] = player2.getSymbol();
-                    let score = minimax(board, 0, false);
+                    let score = minimax(board, 0, true);
                     board[move["row"]][move["col"]] = "";
+                    console.log("Iteration " + i + " score " + score + " play " + move.row + move.col);
                     if (score > bestScore) {
                         bestScore = score;
                         bestMove = move;
                     }
                 });
+                console.log("-----------")
 
                 const tileAI = document.querySelector(`button[data-row='${bestMove["row"]}'][data-col='${bestMove["col"]}']`);
 
@@ -182,7 +185,7 @@ const game = (() => {
     const minimax = (boardState, depth, isMaximizing) => {
         // Check if anyone won
         let result = checkWinner(boardState);
-        if (result !== 0) {
+        if (result !== 0 || isTie(boardState)) {
             return result;
         }
 
