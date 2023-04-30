@@ -25,6 +25,7 @@ const game = (() => {
 
     let currentOpponent = "";
     let turn = 0;
+    let bestMove = null;
 
     const gameboard = (() => {
         let gameboard = [
@@ -56,6 +57,8 @@ const game = (() => {
                 rowIndex++;
             });
         };
+
+        const getBoard = () => gameboard;
     
         const getRow = (rowIndex) => gameboard[rowIndex];
     
@@ -79,6 +82,7 @@ const game = (() => {
     
         return {
             display,
+            getBoard,
             getRow,
             changeTile,
             resetBoard,
@@ -129,42 +133,148 @@ const game = (() => {
     }
     
     const botTurn = () => {
-        switch(currentOpponent) {
-            case easyOpponent:
-                // Store index of all free spaces
-                let freeSpaces = [];
-                for (let i = 0; i < 3; i++) {
-                    let row = gameboard.getRow(i);
+      let tile;
+      switch (currentOpponent) {
+        case easyOpponent:
+          let randomMove = getRandomMove();
 
-                    for (let j = 0; j < 3; j++) {
-                        if (row[j] === "")
-                            freeSpaces.push({row: i, col: j});
-                    }
-                }
+          tile = document.querySelector(
+            `button[data-row='${randomMove["row"]}'][data-col='${randomMove["col"]}']`
+          );
 
-                // Choose an index randomly
-                let choosenSquare = freeSpaces[Math.floor(Math.random() * freeSpaces.length)];
+          // Make a play on the square with that index
+          makePlay(
+            player2.getSymbol(),
+            randomMove["row"],
+            randomMove["col"],
+            tile
+          );
+          endTurn(randomMove["row"], randomMove["col"]);
 
-                // Make a play on the square with that index
-                const tile = document.querySelector(
-                    `button[data-row='${choosenSquare["row"]}'][data-col='${choosenSquare["col"]}']`
-                    );
+          break;
 
-                makePlay(player2.getSymbol(), choosenSquare["row"], choosenSquare["col"], tile);
-                endTurn(choosenSquare["row"], choosenSquare["col"]);
-                
-                break;
+        case hardOpponent:
+          let move;
 
-            case hardOpponent:
-                break
+          if (Math.random() > 0.8) {
+            move = getBestMove();
+          } else {
+            move = getRandomMove();
+          }
 
-            case unbeatableOpponent:
-                break;
+          tile = document.querySelector(
+            `button[data-row='${move["row"]}'][data-col='${move["col"]}']`
+          );
 
-            default:
-                console.log("botTurn: oopsie!");
-                break;
+          makePlay(player2.getSymbol(), move["row"], move["col"], tile);
+          endTurn(move["row"], move["col"]);
+
+          break;
+
+        case unbeatableOpponent:
+          let bestMove = getBestMove();
+
+          tile = document.querySelector(
+            `button[data-row='${bestMove["row"]}'][data-col='${bestMove["col"]}']`
+          );
+
+          makePlay(player2.getSymbol(), bestMove["row"], bestMove["col"], tile);
+          endTurn(bestMove["row"], bestMove["col"]);
+
+          break;
+
+        default:
+          console.log("botTurn: oopsie!");
+          break;
+      }
+    };
+
+    const getRandomMove = () => {
+      // Store index of all free spaces
+      let possibleMoves = getPossibleMoves(gameboard.getBoard());
+
+      // Choose a free space randomly
+      return possibleMoves[Math.floor(Math.random() * possibleMoves.length)];
+    };
+
+    const getBestMove = () => {
+      let board = gameboard.getBoard();
+      let bestScore = Infinity;
+      let bestMove;
+
+      getPossibleMoves(board).forEach((move) => {
+        board[move["row"]][move["col"]] = "O";
+
+        let score = minimax(board, 0, "X");
+
+        board[move["row"]][move["col"]] = "";
+
+        if (score < bestScore) {
+          bestScore = score;
+          bestMove = move;
         }
+      });
+
+      return bestMove;
+    };
+
+    const minimax = (boardState, depth, player) => {
+      // Check if anyone won
+      let result = checkWinner(boardState);
+      if (result !== 0 || isTie(boardState)) {
+        return result;
+      }
+
+      if (player === "O") {
+        let bestScore = Infinity;
+        let bestMove = {};
+
+        getPossibleMoves(boardState).forEach((move) => {
+          boardState[move.row][move.col] = "O";
+
+          let score = minimax(boardState, depth + 1, "X");
+
+          boardState[move.row][move.col] = "";
+
+          if (score < bestScore) {
+            bestScore = score;
+            bestMove = { row: move.row, col: move.col };
+          }
+        });
+
+        return bestScore;
+      } else {
+        let bestScore = -Infinity;
+        let bestMove = {};
+
+        getPossibleMoves(boardState).forEach((move) => {
+          boardState[move.row][move.col] = "X";
+
+          let score = minimax(boardState, depth + 1, "O");
+
+          boardState[move.row][move.col] = "";
+
+          if (score > bestScore) {
+            bestScore = score;
+            bestMove = { row: move.row, col: move.col };
+          }
+        });
+
+        return bestScore;
+      }
+    };
+
+    const getPossibleMoves = (boardState) => {
+        let freeSpaces = [];
+
+        for (let rowIndex = 0; rowIndex < 3; rowIndex++) {
+            for (let colIndex = 0; colIndex < 3; colIndex++) {
+                if (boardState[rowIndex][colIndex] === "")
+                    freeSpaces.push({row: rowIndex, col: colIndex});
+            }
+        }
+
+        return freeSpaces;
     }
 
     const makePlay = (symbol, row, col, tile) => {
@@ -178,7 +288,7 @@ const game = (() => {
         updateTurnText();        
 
         // Check if game is over
-        if (isGameOver(row, col))
+        if (isGameOver(gameboard.getBoard(), row, col))
             return;
         else if (!isPlayer1Turn() && playingAgainstBot()) {
             botTurn();
@@ -229,48 +339,83 @@ const game = (() => {
         text.textContent = `${player1.getName()}'s turn`;
     };
 
-    const isGameOver = (rowIndex, colIndex) => {
+    const isGameOver = (boardState, rowIndex, colIndex) => {
+        const winner = checkWinnerFromPlay(boardState, rowIndex, colIndex);
+
+        if (isTie(boardState) || winner !== 0) {
+            switch(winner) {
+                case 15:
+                    showWinner(player1.getName());
+                    break;
+                case -15:
+                    showWinner(player2.getName());
+                    break;
+                default:
+                    if (isTie(boardState)) {
+                        showWinner("");
+                    }
+                    break;
+    
+            }
+            gameboard.disableTiles();
+
+            return true;
+        }
+
+        return false;
+    };
+
+    // Returns 15 if player 1 wins, -15 if player 2 wins, 0 if no winner
+    const checkWinner = (boardState) => {
+        for (let i = 0; i < 3; i++) {
+            for (let j = 0; j < 3; j++) {
+                let winner = checkWinnerFromPlay(boardState, i, j);
+                if (winner != 0) {
+                    return winner;
+                }
+            }
+        }
+
+        return 0;
+    };
+
+    const checkWinnerFromPlay = (boardState, rowIndex, colIndex) => {
         let sums = [];
         
         // Calculate rows
-        sums.push(calculateRow(gameboard.getRow(rowIndex), rowIndex));
+        sums.push(calculateRow(boardState[rowIndex], rowIndex));
         
         // Calculate columns
-        sums.push(calculateCol(colIndex));
+        sums.push(calculateCol(boardState, colIndex));
         
         // Calculate diagonal
         if (rowIndex == colIndex) {
-            sums.push(calculateDiag());
+            sums.push(calculateDiag(boardState));
         }
 
         // Calculate anti diagonal
         if ((+rowIndex + +colIndex) === 2) {
-            sums.push(calculateAntiDiag());
+            sums.push(calculateAntiDiag(boardState));
         }
 
         // Check if there's any calculation (= 15 || = -15)
-        let winner = "";
+        let winner = 0;
         sums.forEach(sum => {
             switch (sum) {
                 case 15:
-                    winner = player1.getName();
+                    winner = sum;
                     break;
                 case -15:
-                    winner = player2.getName();
+                    winner = sum;
                     break;
                 default:
                     break;
             }
         });
 
-        if (isGameFinished() || winner !== "") {
-            gameboard.disableTiles();
-            showWinner(winner);
-            return true;
-        }
 
-        return false;
-    };
+        return winner;
+    }
 
     const showWinner = (winner) => {
         const text = document.querySelector("#turn-text");
@@ -287,7 +432,6 @@ const game = (() => {
         let rowSum = 0;
 
         for (let colIndex = 0; colIndex < 3; colIndex++) {
-
             if (row[colIndex] === player1.getSymbol())
                 rowSum += magicBoard[rowIndex][colIndex]
             else if (row[colIndex] === player2.getSymbol())
@@ -297,11 +441,11 @@ const game = (() => {
         return rowSum;
     }
 
-    const calculateCol = (colIndex) => {
+    const calculateCol = (boardState, colIndex) => {
         let colSum = 0;
 
         for (let rowIndex = 0; rowIndex < 3; rowIndex++) {
-            const row = gameboard.getRow(rowIndex);
+            const row = boardState[rowIndex];
 
             if (row[colIndex] === player1.getSymbol())
                 colSum += magicBoard[rowIndex][colIndex];
@@ -312,11 +456,11 @@ const game = (() => {
         return colSum;
     }
 
-    const calculateDiag = () => {
+    const calculateDiag = (boardState) => {
         let diagSum = 0;
 
         for (let i = 0; i < 3; i++) {
-            const row = gameboard.getRow(i);
+            const row = boardState[i];
 
             if (row[i] === player1.getSymbol())
                 diagSum += magicBoard[i][i];
@@ -327,12 +471,12 @@ const game = (() => {
         return diagSum;
     }
 
-    const calculateAntiDiag = () => {
+    const calculateAntiDiag = (boardState) => {
         let antiDiagSum = 0;
         let colIndex = 2;
 
         for (let rowIndex = 0; rowIndex < 3; rowIndex++) {
-            const row = gameboard.getRow(rowIndex);
+            const row = boardState[rowIndex];
 
             if (row[colIndex] === player1.getSymbol())
                 antiDiagSum += magicBoard[rowIndex][colIndex];
@@ -345,7 +489,18 @@ const game = (() => {
         return antiDiagSum;
     }
 
-    const isGameFinished = () => turn >= 9;
+    const isTie = (boardState) => {
+        let occupied = 0;
+
+        for (let i = 0; i < 3; i++) {
+            for (let j = 0; j < 3; j++) {
+                if (boardState[i][j] !== "") {
+                    occupied++;
+                }
+            }
+        }
+        return occupied === 9;
+    };
 
     return {
         displayBoard,

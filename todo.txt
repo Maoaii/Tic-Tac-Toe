@@ -1,3 +1,2 @@
-- Create minmax ai
 - Create smarter ai
-- Create random ai
+- Create minmax ai
