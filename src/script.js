@@ -133,85 +133,136 @@ const game = (() => {
     }
     
     const botTurn = () => {
-        switch(currentOpponent) {
-            case easyOpponent:
-                // Store index of all free spaces
-                let possibleMoves = getPossibleMoves(gameboard.getBoard());
+      let tile;
+      switch (currentOpponent) {
+        case easyOpponent:
+          let randomMove = getRandomMove();
 
-                // Choose a free space randomly
-                let choosenSquare = possibleMoves[Math.floor(Math.random() * possibleMoves.length)];
-                const tile = document.querySelector(`button[data-row='${choosenSquare["row"]}'][data-col='${choosenSquare["col"]}']`);
-                
-                // Make a play on the square with that index
-                makePlay(player2.getSymbol(), choosenSquare["row"], choosenSquare["col"], tile);
-                endTurn(choosenSquare["row"], choosenSquare["col"]);
-                
-                break;
+          tile = document.querySelector(
+            `button[data-row='${randomMove["row"]}'][data-col='${randomMove["col"]}']`
+          );
 
-            case hardOpponent:
-                break
+          // Make a play on the square with that index
+          makePlay(
+            player2.getSymbol(),
+            randomMove["row"],
+            randomMove["col"],
+            tile
+          );
+          endTurn(randomMove["row"], randomMove["col"]);
 
-            case unbeatableOpponent:
-                let board = gameboard.getBoard();
-                let bestScore = -Infinity;
-                let bestMove;
+          break;
 
-                let i = 0;
-                getPossibleMoves(board).forEach(move => {
-                    board[move["row"]][move["col"]] = player2.getSymbol();
-                    let score = minimax(board, 0, true);
-                    board[move["row"]][move["col"]] = "";
-                    console.log("Iteration " + i + " score " + score + " play " + move.row + move.col);
-                    if (score > bestScore) {
-                        bestScore = score;
-                        bestMove = move;
-                    }
-                });
-                console.log("-----------")
+        case hardOpponent:
+          let move;
 
-                const tileAI = document.querySelector(`button[data-row='${bestMove["row"]}'][data-col='${bestMove["col"]}']`);
+          if (Math.random() > 0.8) {
+            move = getBestMove();
+          } else {
+            move = getRandomMove();
+          }
 
-                makePlay(player2.getSymbol(), bestMove["row"], bestMove["col"], tileAI);
-                endTurn(bestMove["row"], bestMove["col"]);
+          tile = document.querySelector(
+            `button[data-row='${move["row"]}'][data-col='${move["col"]}']`
+          );
 
-                break;
-                
-            default:
-                console.log("botTurn: oopsie!");
-            break;
+          makePlay(player2.getSymbol(), move["row"], move["col"], tile);
+          endTurn(move["row"], move["col"]);
+
+          break;
+
+        case unbeatableOpponent:
+          let bestMove = getBestMove();
+
+          tile = document.querySelector(
+            `button[data-row='${bestMove["row"]}'][data-col='${bestMove["col"]}']`
+          );
+
+          makePlay(player2.getSymbol(), bestMove["row"], bestMove["col"], tile);
+          endTurn(bestMove["row"], bestMove["col"]);
+
+          break;
+
+        default:
+          console.log("botTurn: oopsie!");
+          break;
+      }
+    };
+
+    const getRandomMove = () => {
+      // Store index of all free spaces
+      let possibleMoves = getPossibleMoves(gameboard.getBoard());
+
+      // Choose a free space randomly
+      return possibleMoves[Math.floor(Math.random() * possibleMoves.length)];
+    };
+
+    const getBestMove = () => {
+      let board = gameboard.getBoard();
+      let bestScore = Infinity;
+      let bestMove;
+
+      getPossibleMoves(board).forEach((move) => {
+        board[move["row"]][move["col"]] = "O";
+
+        let score = minimax(board, 0, "X");
+
+        board[move["row"]][move["col"]] = "";
+
+        if (score < bestScore) {
+          bestScore = score;
+          bestMove = move;
         }
-    }
+      });
 
-    const minimax = (boardState, depth, isMaximizing) => {
-        // Check if anyone won
-        let result = checkWinner(boardState);
-        if (result !== 0 || isTie(boardState)) {
-            return result;
-        }
+      return bestMove;
+    };
 
-        if (isMaximizing) {
-            let bestScore = -Infinity;
-            getPossibleMoves(boardState).forEach(move => {
-                boardState[move["row"]][move["col"]] = player2.getSymbol();
-                let score = minimax(boardState, depth + 1, false);
-                boardState[move["row"]][move["col"]] = "";
-                bestScore = Math.max(score, bestScore);
-            });
+    const minimax = (boardState, depth, player) => {
+      // Check if anyone won
+      let result = checkWinner(boardState);
+      if (result !== 0 || isTie(boardState)) {
+        return result;
+      }
 
-            return bestScore;
-        } 
-        else {
-            let bestScore = Infinity;
-            getPossibleMoves(boardState).forEach(move => {
-                boardState[move["row"]][move["col"]] = player1.getSymbol();
-                let score = minimax(boardState, depth + 1, true);
-                boardState[move["row"]][move["col"]] = "";
-                bestScore = Math.min(score, bestScore);
-            });
+      if (player === "O") {
+        let bestScore = Infinity;
+        let bestMove = {};
 
-            return bestScore;
-        }
-    }
+        getPossibleMoves(boardState).forEach((move) => {
+          boardState[move.row][move.col] = "O";
+
+          let score = minimax(boardState, depth + 1, "X");
+
+          boardState[move.row][move.col] = "";
+
+          if (score < bestScore) {
+            bestScore = score;
+            bestMove = { row: move.row, col: move.col };
+          }
+        });
+
+        return bestScore;
+      } else {
+        let bestScore = -Infinity;
+        let bestMove = {};
+
+        getPossibleMoves(boardState).forEach((move) => {
+          boardState[move.row][move.col] = "X";
+
+          let score = minimax(boardState, depth + 1, "O");
+
+          boardState[move.row][move.col] = "";
+
+          if (score > bestScore) {
+            bestScore = score;
+            bestMove = { row: move.row, col: move.col };
+          }
+        });
+
+        return bestScore;
+      }
+    };
 
     const getPossibleMoves = (boardState) => {
         let freeSpaces = [];
