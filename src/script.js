@@ -181,7 +181,7 @@ const game = (() => {
 
     if (tile.textContent === "") {
       updateBoard(currentPlayer, tileRow, tileCol, tile);
-      endTurn(tileRow, tileCol);
+      endTurn();
     }
   };
 
@@ -225,7 +225,7 @@ const game = (() => {
 
     // Make a play on the square with that index
     updateBoard(currentPlayer, move["row"], move["col"], tile);
-    endTurn(move["row"], move["col"]);
+    endTurn();
   };
 
   const getRandomMove = () => {
@@ -333,7 +333,7 @@ const game = (() => {
     return freeSpaces;
   };
 
-  const endTurn = (row, col) => {
+  const endTurn = () => {
     isPlaying = true;
     isPlayer1 = !isPlayer1;
     currentPlayer =
@@ -347,7 +347,7 @@ const game = (() => {
     }
 
     // Check if game is over
-    if (isGameOverFromPlay(gameboard.getBoard(), row, col)) {
+    if (isGameOver(gameboard.getBoard())) {
       gameboard.disableTiles();
 
       return;
@@ -408,8 +408,8 @@ const game = (() => {
     }
   };
 
-  const isGameOverFromPlay = (boardState, rowIndex, colIndex) => {
-    const winner = checkWinnerFromPlay(boardState, rowIndex, colIndex);
+  const isGameOver = (boardState) => {
+    const winner = checkWinner(boardState);
 
     if (isTie(boardState) || winner !== 0) {
       switch (winner) {
@@ -434,36 +434,23 @@ const game = (() => {
 
   // Returns 15 if player 1 wins, -15 if player 2 wins, 0 if no winner
   const checkWinner = (boardState) => {
-    for (let i = 0; i < 3; i++) {
-      for (let j = 0; j < 3; j++) {
-        let winner = checkWinnerFromPlay(boardState, i, j);
-        if (winner != 0) {
-          return winner;
-        }
-      }
-    }
-
-    return 0;
-  };
-
-  const checkWinnerFromPlay = (boardState, rowIndex, colIndex) => {
     let sums = [];
 
     // Calculate rows
-    sums.push(calculateRow(boardState[rowIndex], rowIndex));
+    for (let rowIndex = 0; rowIndex < 3; rowIndex++) {
+      sums.push(calculateRow(boardState[rowIndex], rowIndex));
+    }
 
     // Calculate columns
-    sums.push(calculateCol(boardState, colIndex));
+    for (let colIndex = 0; colIndex < 3; colIndex++) {
+      sums.push(calculateCol(boardState, colIndex));
+    }
 
     // Calculate diagonal
-    if (rowIndex == colIndex) {
-      sums.push(calculateDiag(boardState));
-    }
+    sums.push(calculateDiag(boardState));
 
     // Calculate anti diagonal
-    if (+rowIndex + +colIndex === 2) {
-      sums.push(calculateAntiDiag(boardState));
-    }
+    sums.push(calculateAntiDiag(boardState));
 
     // Check if there's any calculation (= 15 || = -15)
     let winner = 0;
