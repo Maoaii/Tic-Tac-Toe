@@ -49,6 +49,7 @@ table {
 
 :root {
     --tile-size: 100px;
+    --sm-tile-size: 60px;
     --tile-color: #ff8000;
     --tile-border-color: #ac5601;
     --bg-color: #fcfbf8;
@@ -172,6 +173,14 @@ footer {
     grid-template-columns: repeat(3, var(--tile-size));
     grid-template-rows: repeat(3, var(--tile-size));
     border: 3px solid var(--dark-beige);
+}
+
+@media screen and (max-width: 400px) {
+    #game-container {
+        grid-template-columns: repeat(3, var(--sm-tile-size));
+        grid-template-rows: repeat(3, var(--sm-tile-size));
+        border: 2px solid var(--dark-beige);
+    }
 }
 
 #controls {
