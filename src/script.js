@@ -24,6 +24,7 @@ const game = (() => {
   ];
 
   let playerSymbol = "X";
+  let opponentSymbol = "O";
   let currentOpponent = "player";
   let currentPlayer = "X";
   let turn = 0;
@@ -103,12 +104,19 @@ const game = (() => {
   };
 
   const initGame = () => {
+    disablePlayerSelection();
     // Reset game
     resetGame();
   };
 
   const setupOpponent = (event) => {
     currentOpponent = event.target.value;
+
+    if (currentOpponent === playerOpponent) {
+      disablePlayerSelection();
+    } else {
+      enablePlayerSelection();
+    }
   };
 
   const setupPlayer = (event) => {
@@ -119,20 +127,40 @@ const game = (() => {
 
     // Remove selected styling on the other button
     const other =
-      playerSymbol === "X"
+      playerSymbol === player1.getSymbol()
         ? document.querySelector(".O")
         : document.querySelector(".X");
     other.classList.remove("selected");
+
+    opponentSymbol = other.value;
+
+    // If user wants to be second, make AI play
+    if (playerSymbol === player2.getSymbol() && playingAgainstBot()) {
+      botTurn();
+    }
+  };
+
+  const disablePlayerSelection = () => {
+    [xSymbol, oSymbol].forEach((btn) => {
+      btn.classList.add("disabled");
+      btn.disabled = true;
+    });
+  };
+
+  const enablePlayerSelection = () => {
+    [xSymbol, oSymbol].forEach((btn) => {
+      btn.classList.remove("disabled");
+      btn.disabled = false;
+    });
   };
 
   const playTurn = (event) => {
     const tile = event.target;
     const tileRow = tile.getAttribute("data-row");
     const tileCol = tile.getAttribute("data-col");
-    let symbol = isPlayer1Turn() ? player1.getSymbol() : player2.getSymbol();
 
     if (tile.textContent === "") {
-      makePlay(symbol, tileRow, tileCol, tile);
+      makePlay(playerSymbol, tileRow, tileCol, tile);
       endTurn(tileRow, tileCol);
     }
     if (turn > 0) disableVersusSelection();
@@ -155,12 +183,7 @@ const game = (() => {
         );
 
         // Make a play on the square with that index
-        makePlay(
-          player2.getSymbol(),
-          randomMove["row"],
-          randomMove["col"],
-          tile
-        );
+        makePlay(opponentSymbol, randomMove["row"], randomMove["col"], tile);
         endTurn(randomMove["row"], randomMove["col"]);
 
         break;
@@ -178,7 +201,7 @@ const game = (() => {
           `button[data-row='${move["row"]}'][data-col='${move["col"]}']`
         );
 
-        makePlay(player2.getSymbol(), move["row"], move["col"], tile);
+        makePlay(opponentSymbol, move["row"], move["col"], tile);
         endTurn(move["row"], move["col"]);
 
         break;
@@ -190,7 +213,7 @@ const game = (() => {
           `button[data-row='${bestMove["row"]}'][data-col='${bestMove["col"]}']`
         );
 
-        makePlay(player2.getSymbol(), bestMove["row"], bestMove["col"], tile);
+        makePlay(opponentSymbol, bestMove["row"], bestMove["col"], tile);
         endTurn(bestMove["row"], bestMove["col"]);
 
         break;
@@ -296,14 +319,20 @@ const game = (() => {
 
   const endTurn = (row, col) => {
     turn++;
+    currentPlayer =
+      currentPlayer === playerSymbol ? opponentSymbol : playerSymbol;
 
     updateTurnText();
 
     // Check if game is over
     if (isGameOver(gameboard.getBoard(), row, col)) return;
-    else if (!isPlayer1Turn() && playingAgainstBot()) {
+    else if (playingAgainstBot() && isOpponentTurn()) {
       botTurn();
     }
+  };
+
+  const isOpponentTurn = () => {
+    return currentPlayer === opponentSymbol;
   };
 
   const playingAgainstBot = () => {
