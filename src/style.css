@@ -122,7 +122,7 @@ footer {
     width: 100%;
 }
 
-#controls > button, select {
+#controls > button, select, .X, .O {
     cursor: pointer;
     background-color: var(--dark-blue);
     color: var(--bg-color);
@@ -134,21 +134,16 @@ footer {
     text-align: center;
 }
 
-#controls > button:hover, select:hover {
+#controls > button:hover, select:hover, .X:hover, .O:hover {
     background-color: var(--orange-red);
 }
-#controls > button:focus-visible, select:focus-visible {
+#controls > button:focus-visible, select:focus-visible, .X:focus-visible, .O:focus-visible {
     background-color: var(--orange-red);
     outline: none;
 }
 
-#controls > button:active, select:active {
+#controls > button:active, select:active, .X:active, .O:active {
     background-color: var(--dark-blue);
-}
-
-#reset {
-    background-color: var(--orange-red);
-    color: var(--bg-color);
 }
 
 .tile {
@@ -186,7 +181,23 @@ footer {
     width: 300px;
 }
 
+#player-symbol {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+.X {
+    margin-left: 10px;
+    margin-right: 10px;
+}
+
 .disabled {
     pointer-events: none;
     opacity: 0.7;
+}
+
+.selected {
+    background-color: var(--orange-red);
+    outline: none;
 }

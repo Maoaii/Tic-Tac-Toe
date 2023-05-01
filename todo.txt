@@ -1,2 +1,0 @@
-- Create smarter ai
-- Create minmax ai
