@@ -23,12 +23,12 @@ const game = (() => {
     [4, 3, 8],
   ];
 
+  let isPlayer1 = true;
   let playerSymbol = "X";
   let opponentSymbol = "O";
   let currentOpponent = "player";
   let currentPlayer = "X";
   let turn = 0;
-  let bestMove = null;
 
   const gameboard = (() => {
     let gameboard = [
@@ -63,11 +63,7 @@ const game = (() => {
 
     const getBoard = () => gameboard;
 
-    const getRow = (rowIndex) => gameboard[rowIndex];
-
     const changeTile = (row, col, symbol) => (gameboard[row][col] = symbol);
-
-    const printBoard = () => console.log(gameboard);
 
     const resetBoard = () => {
       gameboard = [
@@ -101,12 +97,10 @@ const game = (() => {
     return {
       display,
       getBoard,
-      getRow,
       changeTile,
       resetBoard,
       disableTiles,
       enableTiles,
-      printBoard,
     };
   })();
 
@@ -126,11 +120,6 @@ const game = (() => {
     // Add event listeners to tiles
     const tiles = document.querySelectorAll(".tile");
     tiles.forEach((tile) => tile.addEventListener("click", playTurn));
-  };
-
-  const initGame = () => {
-    // Reset game
-    resetGame();
   };
 
   const setupOpponent = (event) => {
@@ -159,9 +148,11 @@ const game = (() => {
     opponentSymbol = other.value;
 
     // If user wants to be second, make AI play
-    if (playerSymbol === player2.getSymbol() && playingAgainstBot()) {
-      botTurn();
-    }
+    if (playerIsSecond()) botTurn();
+  };
+
+  const playerIsSecond = () => {
+    return playerSymbol === player2.getSymbol();
   };
 
   const disablePlayerSelection = () => {
@@ -192,10 +183,6 @@ const game = (() => {
       makePlay(currentPlayer, tileRow, tileCol, tile);
       endTurn(tileRow, tileCol);
     }
-    if (turn > 0) {
-      disablePlayerSelection();
-      disableVersusSelection();
-    }
   };
 
   const disableVersusSelection = () => {
@@ -206,6 +193,8 @@ const game = (() => {
 
   const botTurn = () => {
     let tile;
+    let move;
+
     switch (currentOpponent) {
       case easyOpponent:
         let randomMove = getRandomMove();
@@ -253,11 +242,6 @@ const game = (() => {
       default:
         console.log("botTurn: oopsie!");
         break;
-    }
-
-    if (turn > 0) {
-      disablePlayerSelection();
-      disableVersusSelection();
     }
   };
 
@@ -316,18 +300,17 @@ const game = (() => {
       return result;
     }
 
-    if (player === "O") {
-      let bestScore = Infinity;
-      let bestMove = {};
+    if (player === player1.getSymbol()) {
+      let bestScore = -Infinity;
 
       getPossibleMoves(boardState).forEach((move) => {
-        boardState[move.row][move.col] = "O";
+        boardState[move.row][move.col] = player;
 
-        let score = minimax(boardState, depth + 1, "X");
+        let score = minimax(boardState, depth + 1, player2.getSymbol());
 
         boardState[move.row][move.col] = "";
 
-        if (score < bestScore) {
+        if (score > bestScore) {
           bestScore = score;
           bestMove = { row: move.row, col: move.col };
         }
@@ -335,17 +318,16 @@ const game = (() => {
 
       return bestScore;
     } else {
-      let bestScore = -Infinity;
-      let bestMove = {};
+      let bestScore = Infinity;
 
       getPossibleMoves(boardState).forEach((move) => {
-        boardState[move.row][move.col] = "X";
+        boardState[move.row][move.col] = player;
 
-        let score = minimax(boardState, depth + 1, "O");
+        let score = minimax(boardState, depth + 1, player1.getSymbol());
 
         boardState[move.row][move.col] = "";
 
-        if (score > bestScore) {
+        if (score < bestScore) {
           bestScore = score;
           bestMove = { row: move.row, col: move.col };
         }
@@ -379,6 +361,11 @@ const game = (() => {
       currentPlayer === playerSymbol ? opponentSymbol : playerSymbol;
 
     updateTurnText();
+
+    if (turn > 0) {
+      disablePlayerSelection();
+      disableVersusSelection();
+    }
 
     // Check if game is over
     if (isGameOver(gameboard.getBoard(), row, col)) return;
@@ -596,7 +583,6 @@ const game = (() => {
 
   return {
     displayBoard,
-    initGame,
     resetGame,
     setupOpponent,
     setupPlayer,
@@ -614,6 +600,5 @@ oSymbol.addEventListener("click", game.setupPlayer);
 const opponent = document.getElementById("versus");
 opponent.addEventListener("change", game.setupOpponent);
 
-
 game.displayBoard();
-game.initGame();
+game.resetGame();
