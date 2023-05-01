@@ -16,7 +16,7 @@
 <br />
 <div align="center">
   <a href="https://github.com/Maoaii/Tic-Tac-Toe">
-    <img src="/public/assets/img/icon-medium.png" alt="Logo" width="80" height="80">
+    <img src="./img/icon.png" alt="Logo" width="80" height="80">
   </a>
 
 <h3 align="center">Tic-Tac-Toe</h3>
