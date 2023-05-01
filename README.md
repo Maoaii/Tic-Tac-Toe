@@ -47,25 +47,29 @@
 ## About The Project
 
 HomePage
-<img src="./img/screenshots/Homepage.png">
+<br />
+<img src="./img/screenshots/Homepage.png" style="width:40%">
 <br />
 <br />
 <br />
 
 Opponent selection
-<img src="./img/screenshots/OpponentSelection.png">
+<br />
+<img src="./img/screenshots/OpponentSelection.png" style="width:40%">
 <br />
 <br />
 <br />
 
 Win state example
-<img src="./img/screenshots/WinState.png">
+<br />
+<img src="./img/screenshots/WinState.png" style="width:40%">
 <br />
 <br />
 <br />
 
 Draw state example, playing as second.
-<img src="./img/screenshots/BotDraw.png">
+<br />
+<img src="./img/screenshots/BotDraw.png" style="width:40%">
 <br />
 <br />
 <br />
