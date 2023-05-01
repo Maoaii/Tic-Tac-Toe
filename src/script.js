@@ -38,6 +38,9 @@ const game = (() => {
       ["", "", ""],
     ];
 
+    /**
+     * Displays the current board
+     */
     const display = () => {
       let rowIndex = 0;
 
@@ -63,10 +66,22 @@ const game = (() => {
       });
     };
 
+    /**
+     * @returns the current board
+     */
     const getBoard = () => gameboard;
 
+    /**
+     * @param {*} row - row of the tile to change
+     * @param {*} col - columns of the tile to change
+     * @param {*} symbol - symbol to change to
+     * @returns the new board
+     */
     const changeTile = (row, col, symbol) => (gameboard[row][col] = symbol);
 
+    /**
+     * Resets the current board
+     */
     const resetBoard = () => {
       gameboard = [
         ["", "", ""],
@@ -80,6 +95,9 @@ const game = (() => {
       });
     };
 
+    /**
+     * Disables the board tiles from being clicked
+     */
     const disableTiles = () => {
       const tiles = document.querySelectorAll(".tile");
       tiles.forEach((tile) => {
@@ -88,6 +106,9 @@ const game = (() => {
       });
     };
 
+    /**
+     * Enables the board tiles to be clicked
+     */
     const enableTiles = () => {
       const tiles = document.querySelectorAll(".tile");
       tiles.forEach((tile) => {
@@ -106,6 +127,9 @@ const game = (() => {
     };
   })();
 
+  /**
+   * Displays the board on the screen and adds event listeners to the tiles
+   */
   const displayBoard = () => {
     gameboard.display();
 
@@ -114,6 +138,9 @@ const game = (() => {
     tiles.forEach((tile) => tile.addEventListener("click", playTurn));
   };
 
+  /**
+   * @param {*} event - type of opponent choosen, player, easy, hard or unbeatable
+   */
   const setupOpponent = (event) => {
     currentOpponent = event.target.value;
 
@@ -124,10 +151,17 @@ const game = (() => {
     }
   };
 
+  /**
+   * @returns true if playing agains a player, false otherwise
+   */
   const isPvP = () => {
     return currentOpponent === playerOpponent;
   };
 
+  /**
+   *
+   * @param {*} event - type of player choosen, X or O
+   */
   const setupPlayer = (event) => {
     // Setup symbol
     playerSymbol = event.target.value;
@@ -148,6 +182,11 @@ const game = (() => {
     if (playerIsSecond()) botTurn();
   };
 
+  /**
+   * If player clicks on an empty tile, update the board
+   *
+   * @param {*} event - tile clicked by player
+   */
   const playTurn = (event) => {
     const tile = event.target;
     const tileRow = tile.getAttribute("data-row");
@@ -159,6 +198,11 @@ const game = (() => {
     }
   };
 
+  /**
+   * Alters state variables and passes the turn to the next player
+   *
+   * @returns if game is over after the turn
+   */
   const endTurn = () => {
     // Update state variables
     isPlaying = true;
@@ -184,6 +228,9 @@ const game = (() => {
     }
   };
 
+  /**
+   * AI turn, based on opponent choosen
+   */
   const botTurn = () => {
     let move;
 
@@ -222,6 +269,9 @@ const game = (() => {
     endTurn();
   };
 
+  /**
+   * @returns a random possible move
+   */
   const getRandomMove = () => {
     // Store index of all free spaces
     let possibleMoves = getPossibleMoves(gameboard.getBoard());
@@ -230,6 +280,9 @@ const game = (() => {
     return possibleMoves[Math.floor(Math.random() * possibleMoves.length)];
   };
 
+  /**
+   * @returns the best possible move
+   */
   const getBestMove = () => {
     let board = gameboard.getBoard();
     let bestScore;
@@ -282,6 +335,12 @@ const game = (() => {
     return bestMove;
   };
 
+  /**
+   * @param {*} boardState - current state of the board
+   * @param {*} depth - depth of recursive search
+   * @param {*} player - player maximizing or minimizing the play
+   * @returns the score of the outcome
+   */
   const minimax = (boardState, depth, player) => {
     // Check if anyone won
     let result = checkWinner(boardState);
@@ -339,6 +398,10 @@ const game = (() => {
     }
   };
 
+  /**
+   * @param {*} boardState - current state of the board
+   * @returns the possible moves on the current state of the board
+   */
   const getPossibleMoves = (boardState) => {
     let freeSpaces = [];
 
@@ -352,34 +415,59 @@ const game = (() => {
     return freeSpaces;
   };
 
+  /**
+   * @returns true if player is second to play, false otherwise
+   */
   const playerIsSecond = () => {
     return playerSymbol === player2.getSymbol();
   };
 
+  /**
+   * @returns true if it's the opponent's turn, false otherwise
+   */
   const isOpponentTurn = () => {
     return currentPlayer === opponentSymbol;
   };
 
+  /**
+   * @returns true if current opponent is an AI, false otherwise
+   */
   const playingAgainstBot = () => {
     return currentOpponent != playerOpponent;
   };
 
+  /**
+   * Disables button and turns down the opacity
+   *
+   * @param {*} button - button to be disabled
+   */
   const disableButton = (button) => {
     button.classList.add("disabled");
     button.disabled = true;
   };
 
+  /**
+   * Enables button and turns up the opacity
+   *
+   * @param {*} button - button to be enabled
+   */
   const enableButton = (button) => {
     button.classList.remove("disabled");
     button.disabled = false;
   };
 
+  /**
+   * Disables the player selection controls
+   */
   const disablePlayerSelection = () => {
     [xSymbol, oSymbol].forEach((btn) => {
       disableButton(btn);
     });
   };
 
+  /**
+   * Enables the player selection controls
+   */
   const enablePlayerSelection = () => {
     [xSymbol, oSymbol].forEach((btn) => {
       enableButton(btn);
@@ -391,12 +479,18 @@ const game = (() => {
     opponentSymbol = player2.getSymbol();
   };
 
+  /**
+   * Disables the versus selection controls
+   */
   const disableVersusSelection = () => {
     const versus = document.querySelector("#versus");
     versus.classList.add("disabled");
     versus.disabled = true;
   };
 
+  /**
+   * Updates the current turn's text element
+   */
   const updateTurnText = () => {
     const text = document.querySelector("#turn-text");
 
@@ -405,11 +499,29 @@ const game = (() => {
     }'s turn`;
   };
 
+  /**
+   * Updates the current board with a new play
+   *
+   * @param {*} symbol - symbol to place on board
+   * @param {*} rowIndex - row to place symbol
+   * @param {*} colIndex - column to place symbol
+   * @param {*} tile - tile to place symbol
+   */
   const updateBoard = (symbol, rowIndex, colIndex, tile) => {
     tile.textContent = symbol;
     gameboard.changeTile(rowIndex, colIndex, symbol);
   };
 
+  /**
+   * Resets:
+   * - playing states;
+   * - turns
+   * - turn text
+   * - gameboard
+   * - game tiles
+   * - versus selection controls
+   * - player selection controls if playing agains an AI
+   */
   const resetGame = () => {
     // Reset playing state
     isPlaying = false;
@@ -441,7 +553,10 @@ const game = (() => {
     }
   };
 
-  // Returns 15 if player 1 wins, -15 if player 2 wins, 0 if no winner
+  /**
+   * @param {*} boardState - current state of the board
+   * @returns 15 if player1 wins, -15 if player2 wins, 0 if no one wins
+   */
   const checkWinner = (boardState) => {
     let sums = [];
 
@@ -479,6 +594,11 @@ const game = (() => {
     return winner;
   };
 
+  /**
+   * Displays the current winner
+   *
+   * @param {*} winner - current winner
+   */
   const showWinner = (winner) => {
     const text = document.querySelector("#turn-text");
 
@@ -489,6 +609,11 @@ const game = (() => {
     }
   };
 
+  /**
+   * @param {*} row - row to calculate
+   * @param {*} rowIndex - row index to calculate
+   * @returns the magic board sum of that row
+   */
   const calculateRow = (row, rowIndex) => {
     let rowSum = 0;
 
@@ -502,6 +627,11 @@ const game = (() => {
     return rowSum;
   };
 
+  /**
+   * @param {*} boardState - current state of the board
+   * @param {*} rowIndex - column index to calculate
+   * @returns the magic board sum of that row
+   */
   const calculateCol = (boardState, colIndex) => {
     let colSum = 0;
 
@@ -517,6 +647,10 @@ const game = (() => {
     return colSum;
   };
 
+  /**
+   * @param {*} boardState - current state of the board
+   * @returns the magic board sum of that diag
+   */
   const calculateDiag = (boardState) => {
     let diagSum = 0;
 
@@ -530,6 +664,10 @@ const game = (() => {
     return diagSum;
   };
 
+  /**
+   * @param {*} boardState - current state of the board
+   * @returns the magic board sum of that antidiag
+   */
   const calculateAntiDiag = (boardState) => {
     let antiDiagSum = 0;
     let colIndex = 2;
@@ -548,6 +686,10 @@ const game = (() => {
     return antiDiagSum;
   };
 
+  /**
+   * @param {*} boardState - current state of the board
+   * @returns true if game is over: tie or someone wins; false otherwise
+   */
   const isGameOver = (boardState) => {
     const winner = checkWinner(boardState);
 
@@ -572,6 +714,11 @@ const game = (() => {
     return false;
   };
 
+  /**
+   *
+   * @param {*} boardState - current state of the board
+   * @returns true if it's a tie, false otherwise
+   */
   const isTie = (boardState) => {
     for (let i = 0; i < 3; i++) {
       for (let j = 0; j < 3; j++) {
