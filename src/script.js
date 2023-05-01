@@ -28,7 +28,7 @@ const game = (() => {
   let opponentSymbol = "O";
   let currentOpponent = "player";
   let currentPlayer = "X";
-  let turn = 0;
+  let isPlaying = false;
 
   const gameboard = (() => {
     let gameboard = [
@@ -180,7 +180,7 @@ const game = (() => {
     const tileCol = tile.getAttribute("data-col");
 
     if (tile.textContent === "") {
-      makePlay(currentPlayer, tileRow, tileCol, tile);
+      updateBoard(currentPlayer, tileRow, tileCol, tile);
       endTurn(tileRow, tileCol);
     }
   };
@@ -192,50 +192,25 @@ const game = (() => {
   };
 
   const botTurn = () => {
-    let tile;
     let move;
 
     switch (currentOpponent) {
       case easyOpponent:
-        let randomMove = getRandomMove();
-
-        tile = document.querySelector(
-          `button[data-row='${randomMove["row"]}'][data-col='${randomMove["col"]}']`
-        );
-
-        // Make a play on the square with that index
-        makePlay(currentPlayer, randomMove["row"], randomMove["col"], tile);
-        endTurn(randomMove["row"], randomMove["col"]);
+        move = getRandomMove();
 
         break;
 
       case hardOpponent:
-        let move;
-
         if (Math.random() > 0.8) {
           move = getBestMove();
         } else {
           move = getRandomMove();
         }
 
-        tile = document.querySelector(
-          `button[data-row='${move["row"]}'][data-col='${move["col"]}']`
-        );
-
-        makePlay(currentPlayer, move["row"], move["col"], tile);
-        endTurn(move["row"], move["col"]);
-
         break;
 
       case unbeatableOpponent:
-        let bestMove = getBestMove();
-
-        tile = document.querySelector(
-          `button[data-row='${bestMove["row"]}'][data-col='${bestMove["col"]}']`
-        );
-
-        makePlay(currentPlayer, bestMove["row"], bestMove["col"], tile);
-        endTurn(bestMove["row"], bestMove["col"]);
+        move = getBestMove();
 
         break;
 
@@ -243,6 +218,14 @@ const game = (() => {
         console.log("botTurn: oopsie!");
         break;
     }
+
+    const tile = document.querySelector(
+      `button[data-row='${move["row"]}'][data-col='${move["col"]}']`
+    );
+
+    // Make a play on the square with that index
+    updateBoard(currentPlayer, move["row"], move["col"], tile);
+    endTurn(move["row"], move["col"]);
   };
 
   const getRandomMove = () => {
@@ -350,26 +333,25 @@ const game = (() => {
     return freeSpaces;
   };
 
-  const makePlay = (symbol, row, col, tile) => {
-    updateBoard(symbol, row, col, tile);
-    gameboard.changeTile(row, col, symbol);
-  };
-
   const endTurn = (row, col) => {
-    turn++;
+    isPlaying = true;
+    isPlayer1 = !isPlayer1;
     currentPlayer =
       currentPlayer === playerSymbol ? opponentSymbol : playerSymbol;
 
     updateTurnText();
 
-    if (turn > 0) {
+    if (isPlaying) {
       disablePlayerSelection();
       disableVersusSelection();
     }
 
     // Check if game is over
-    if (isGameOver(gameboard.getBoard(), row, col)) return;
-    else if (playingAgainstBot() && isOpponentTurn()) {
+    if (isGameOverFromPlay(gameboard.getBoard(), row, col)) {
+      gameboard.disableTiles();
+
+      return;
+    } else if (playingAgainstBot() && isOpponentTurn()) {
       botTurn();
     }
   };
@@ -384,8 +366,10 @@ const game = (() => {
 
   const updateTurnText = () => {
     const text = document.querySelector("#turn-text");
-    if (isPlayer1Turn()) text.textContent = `${player1.getName()}'s turn`;
-    else text.textContent = `${player2.getName()}'s turn`;
+
+    text.textContent = `${
+      isPlayer1 ? player1.getName() : player2.getName()
+    }'s turn`;
   };
 
   const updateBoard = (symbol, rowIndex, colIndex, tile) => {
@@ -393,23 +377,28 @@ const game = (() => {
     gameboard.changeTile(rowIndex, colIndex, symbol);
   };
 
-  const isPlayer1Turn = () => turn % 2 === 0;
-
   const resetGame = () => {
+    // Reset playing state
+    isPlaying = false;
+
     // Reset current player
     currentPlayer = player1.getSymbol();
 
     // Reset turn
     turn = 0;
 
+    // Reset turn text
+    const text = document.querySelector("#turn-text");
+    text.textContent = `${player1.getName()}'s turn`;
+
     // Reset gameboard
     gameboard.resetBoard();
 
-    // Reset versus selection
-    enableButton(document.querySelector("#versus"));
-
     // Enable tiles
     gameboard.enableTiles();
+
+    // Reset versus selection
+    enableButton(document.querySelector("#versus"));
 
     // Reset player selection
     if (currentOpponent !== playerOpponent) {
@@ -417,13 +406,9 @@ const game = (() => {
     } else {
       disablePlayerSelection();
     }
-
-    // Reset turn text
-    const text = document.querySelector("#turn-text");
-    text.textContent = `${player1.getName()}'s turn`;
   };
 
-  const isGameOver = (boardState, rowIndex, colIndex) => {
+  const isGameOverFromPlay = (boardState, rowIndex, colIndex) => {
     const winner = checkWinnerFromPlay(boardState, rowIndex, colIndex);
 
     if (isTie(boardState) || winner !== 0) {
@@ -440,7 +425,6 @@ const game = (() => {
           }
           break;
       }
-      gameboard.disableTiles();
 
       return true;
     }
@@ -569,16 +553,14 @@ const game = (() => {
   };
 
   const isTie = (boardState) => {
-    let occupied = 0;
-
     for (let i = 0; i < 3; i++) {
       for (let j = 0; j < 3; j++) {
-        if (boardState[i][j] !== "") {
-          occupied++;
+        if (boardState[i][j] === "") {
+          return false;
         }
       }
     }
-    return occupied === 9;
+    return true;
   };
 
   return {
