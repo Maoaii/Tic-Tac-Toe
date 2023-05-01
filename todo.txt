@@ -1,3 +1,14 @@
-- When it's in "O" and I click in "X", restart game and make player play
-- When I click "O", restart the game and make bot play
-- When I change versus selection, reset the game
+- Create play button X
+    - Disable board until button clicked X
+    - Play button clicked X
+        - Enable board X
+        - Disable play button X
+        - If PvP
+            - Let player 1 play
+        - If PvB
+            - If player is "X", let player Play
+            - If player is "O", let bot play
+    - Reset button clicked
+        - Disable board X
+        - Enable play button X
+        - Reset board X 

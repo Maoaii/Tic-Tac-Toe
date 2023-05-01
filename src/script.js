@@ -69,18 +69,32 @@ const game = (() => {
 
     const printBoard = () => console.log(gameboard);
 
-    const resetBoard = () =>
-      (gameboard = [
+    const resetBoard = () => {
+      gameboard = [
         ["", "", ""],
         ["", "", ""],
         ["", "", ""],
-      ]);
+      ];
+
+      const tiles = document.querySelectorAll(".tile");
+      tiles.forEach((tile) => {
+        tile.textContent = "";
+      });
+    };
 
     const disableTiles = () => {
       const tiles = document.querySelectorAll(".tile");
       tiles.forEach((tile) => {
         tile.disabled = true;
-        tile.classList.toggle("disabled");
+        tile.classList.add("disabled");
+      });
+    };
+
+    const enableTiles = () => {
+      const tiles = document.querySelectorAll(".tile");
+      tiles.forEach((tile) => {
+        tile.disabled = false;
+        tile.classList.remove("disabled");
       });
     };
 
@@ -91,9 +105,28 @@ const game = (() => {
       changeTile,
       resetBoard,
       disableTiles,
+      enableTiles,
       printBoard,
     };
   })();
+
+  const playGame = () => {
+    // Enable tiles again
+    gameboard.enableTiles();
+
+    // Disable play button
+    disableButton(playButton);
+  };
+
+  const disableButton = (button) => {
+    button.classList.add("disabled");
+    button.disabled = true;
+  };
+
+  const enableButton = (button) => {
+    button.classList.remove("disabled");
+    button.disabled = false;
+  };
 
   const displayBoard = () => {
     gameboard.display();
@@ -104,7 +137,8 @@ const game = (() => {
   };
 
   const initGame = () => {
-    disablePlayerSelection();
+    gameboard.disableTiles();
+
     // Reset game
     resetGame();
   };
@@ -120,6 +154,7 @@ const game = (() => {
   };
 
   const setupPlayer = (event) => {
+    resetGame();
     playerSymbol = event.target.value;
 
     // Add selected styling on clicked button
@@ -152,6 +187,11 @@ const game = (() => {
       btn.classList.remove("disabled");
       btn.disabled = false;
     });
+
+    xSymbol.classList.add("selected");
+    oSymbol.classList.remove("selected");
+    playerSymbol = player1.getSymbol();
+    opponentSymbol = player2.getSymbol();
   };
 
   const playTurn = (event) => {
@@ -160,10 +200,13 @@ const game = (() => {
     const tileCol = tile.getAttribute("data-col");
 
     if (tile.textContent === "") {
-      makePlay(playerSymbol, tileRow, tileCol, tile);
+      makePlay(currentPlayer, tileRow, tileCol, tile);
       endTurn(tileRow, tileCol);
     }
-    if (turn > 0) disableVersusSelection();
+    if (turn > 0) {
+      disablePlayerSelection();
+      disableVersusSelection();
+    }
   };
 
   const disableVersusSelection = () => {
@@ -221,6 +264,11 @@ const game = (() => {
       default:
         console.log("botTurn: oopsie!");
         break;
+    }
+
+    if (turn > 0) {
+      disablePlayerSelection();
+      disableVersusSelection();
     }
   };
 
@@ -353,14 +401,6 @@ const game = (() => {
   const isPlayer1Turn = () => turn % 2 === 0;
 
   const resetGame = () => {
-    // Reset tiles
-    const tiles = document.querySelectorAll(".tile");
-    tiles.forEach((tile) => {
-      tile.textContent = "";
-      tile.disabled = false;
-      tile.classList.remove("disabled");
-    });
-
     // Reset turn
     turn = 0;
 
@@ -368,9 +408,20 @@ const game = (() => {
     gameboard.resetBoard();
 
     // Reset versus selection
-    const versus = document.querySelector("#versus");
-    versus.classList.remove("disabled");
-    versus.disabled = false;
+    enableButton(document.querySelector("#versus"));
+
+    // Enable play button
+    enableButton(playButton);
+
+    // Disable board
+    gameboard.disableTiles();
+
+    // Reset player selection
+    if (currentOpponent !== playerOpponent) {
+      enablePlayerSelection();
+    } else {
+      disablePlayerSelection();
+    }
 
     // Reset turn text
     const text = document.querySelector("#turn-text");
@@ -541,8 +592,12 @@ const game = (() => {
     resetGame,
     setupOpponent,
     setupPlayer,
+    playGame,
   };
 })();
+
+const playButton = document.getElementById("play");
+playButton.addEventListener("click", game.playGame);
 
 const reset = document.getElementById("reset");
 reset.addEventListener("click", game.resetGame);
