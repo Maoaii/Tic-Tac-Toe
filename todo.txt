@@ -1,2 +1,3 @@
-- Create smarter ai
-- Create minmax ai
+- When it's in "O" and I click in "X", restart game and make player play
+- When I click "O", restart the game and make bot play
+- When I change versus selection, reset the game
