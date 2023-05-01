@@ -117,14 +117,19 @@ const game = (() => {
   const setupOpponent = (event) => {
     currentOpponent = event.target.value;
 
-    if (currentOpponent === playerOpponent) {
+    if (isPvP()) {
       disablePlayerSelection();
     } else {
       enablePlayerSelection();
     }
   };
 
+  const isPvP = () => {
+    return currentOpponent === playerOpponent;
+  };
+
   const setupPlayer = (event) => {
+    // Setup symbol
     playerSymbol = event.target.value;
 
     // Add selected styling on clicked button
@@ -155,6 +160,7 @@ const game = (() => {
   };
 
   const endTurn = () => {
+    // Update state variables
     isPlaying = true;
     isPlayer1 = !isPlayer1;
     currentPlayer =
@@ -162,6 +168,7 @@ const game = (() => {
 
     updateTurnText();
 
+    // Disable stuff if first turn
     if (isPlaying) {
       disablePlayerSelection();
       disableVersusSelection();
@@ -180,6 +187,7 @@ const game = (() => {
   const botTurn = () => {
     let move;
 
+    // Depending on the choosen bot, play a different move
     switch (currentOpponent) {
       case easyOpponent:
         move = getRandomMove();
@@ -227,31 +235,43 @@ const game = (() => {
     let bestScore;
     let bestMove;
 
+    // This player is maximizing
     if (currentPlayer === player1.getSymbol()) {
       bestScore = -Infinity;
 
+      // For each possible move, check its' score for the player
       getPossibleMoves(board).forEach((move) => {
+        // Make the play
         board[move["row"]][move["col"]] = currentPlayer;
 
+        // Check if the games down the tree are good
         let score = minimax(board, 0, player2.getSymbol());
 
+        // Remove play
         board[move["row"]][move["col"]] = "";
 
+        // If the games down the tree show a win, update best move
         if (score > bestScore) {
           bestScore = score;
           bestMove = move;
         }
       });
-    } else {
+    }
+    // This player is minimizing
+    else {
       bestScore = Infinity;
 
       getPossibleMoves(board).forEach((move) => {
+        // Make the play
         board[move["row"]][move["col"]] = currentPlayer;
 
+        // Check if the games down the tree are good
         let score = minimax(board, 0, player1.getSymbol());
 
+        // Remove play
         board[move["row"]][move["col"]] = "";
 
+        // If the games down the tree show a win, update best move
         if (score < bestScore) {
           bestScore = score;
           bestMove = move;
@@ -269,16 +289,22 @@ const game = (() => {
       return result;
     }
 
+    // This player is maximizing
     if (player === player1.getSymbol()) {
       let bestScore = -Infinity;
 
+      // For each possible move, check its' score for the player
       getPossibleMoves(boardState).forEach((move) => {
+        // Make the play
         boardState[move.row][move.col] = player;
 
+        // Check if the games down the tree are good
         let score = minimax(boardState, depth + 1, player2.getSymbol());
 
+        // Remove play
         boardState[move.row][move.col] = "";
 
+        // If the games down the tree show a win, update best move
         if (score > bestScore) {
           bestScore = score;
           bestMove = { row: move.row, col: move.col };
@@ -286,16 +312,23 @@ const game = (() => {
       });
 
       return bestScore;
-    } else {
+    }
+    // This player is minimizing
+    else {
       let bestScore = Infinity;
 
+      // For each possible move, check its' score for the player
       getPossibleMoves(boardState).forEach((move) => {
+        // Make the play
         boardState[move.row][move.col] = player;
 
+        // Check if the games down the tree are good
         let score = minimax(boardState, depth + 1, player1.getSymbol());
 
+        // Remove play
         boardState[move.row][move.col] = "";
 
+        // If the games down the tree show a win, update best move
         if (score < bestScore) {
           bestScore = score;
           bestMove = { row: move.row, col: move.col };
@@ -408,30 +441,6 @@ const game = (() => {
     }
   };
 
-  const isGameOver = (boardState) => {
-    const winner = checkWinner(boardState);
-
-    if (isTie(boardState) || winner !== 0) {
-      switch (winner) {
-        case 15:
-          showWinner(player1.getName());
-          break;
-        case -15:
-          showWinner(player2.getName());
-          break;
-        default:
-          if (isTie(boardState)) {
-            showWinner("");
-          }
-          break;
-      }
-
-      return true;
-    }
-
-    return false;
-  };
-
   // Returns 15 if player 1 wins, -15 if player 2 wins, 0 if no winner
   const checkWinner = (boardState) => {
     let sums = [];
@@ -537,6 +546,30 @@ const game = (() => {
     }
 
     return antiDiagSum;
+  };
+
+  const isGameOver = (boardState) => {
+    const winner = checkWinner(boardState);
+
+    if (isTie(boardState) || winner !== 0) {
+      switch (winner) {
+        case 15:
+          showWinner(player1.getName());
+          break;
+        case -15:
+          showWinner(player2.getName());
+          break;
+        default:
+          if (isTie(boardState)) {
+            showWinner("");
+          }
+          break;
+      }
+
+      return true;
+    }
+
+    return false;
   };
 
   const isTie = (boardState) => {
