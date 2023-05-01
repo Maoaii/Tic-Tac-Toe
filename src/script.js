@@ -110,14 +110,6 @@ const game = (() => {
     };
   })();
 
-  const playGame = () => {
-    // Enable tiles again
-    gameboard.enableTiles();
-
-    // Disable play button
-    disableButton(playButton);
-  };
-
   const disableButton = (button) => {
     button.classList.add("disabled");
     button.disabled = true;
@@ -137,8 +129,6 @@ const game = (() => {
   };
 
   const initGame = () => {
-    gameboard.disableTiles();
-
     // Reset game
     resetGame();
   };
@@ -154,7 +144,6 @@ const game = (() => {
   };
 
   const setupPlayer = (event) => {
-    resetGame();
     playerSymbol = event.target.value;
 
     // Add selected styling on clicked button
@@ -226,7 +215,7 @@ const game = (() => {
         );
 
         // Make a play on the square with that index
-        makePlay(opponentSymbol, randomMove["row"], randomMove["col"], tile);
+        makePlay(currentPlayer, randomMove["row"], randomMove["col"], tile);
         endTurn(randomMove["row"], randomMove["col"]);
 
         break;
@@ -244,7 +233,7 @@ const game = (() => {
           `button[data-row='${move["row"]}'][data-col='${move["col"]}']`
         );
 
-        makePlay(opponentSymbol, move["row"], move["col"], tile);
+        makePlay(currentPlayer, move["row"], move["col"], tile);
         endTurn(move["row"], move["col"]);
 
         break;
@@ -256,7 +245,7 @@ const game = (() => {
           `button[data-row='${bestMove["row"]}'][data-col='${bestMove["col"]}']`
         );
 
-        makePlay(opponentSymbol, bestMove["row"], bestMove["col"], tile);
+        makePlay(currentPlayer, bestMove["row"], bestMove["col"], tile);
         endTurn(bestMove["row"], bestMove["col"]);
 
         break;
@@ -282,21 +271,40 @@ const game = (() => {
 
   const getBestMove = () => {
     let board = gameboard.getBoard();
-    let bestScore = Infinity;
+    let bestScore;
     let bestMove;
 
-    getPossibleMoves(board).forEach((move) => {
-      board[move["row"]][move["col"]] = "O";
+    if (currentPlayer === player1.getSymbol()) {
+      bestScore = -Infinity;
 
-      let score = minimax(board, 0, "X");
+      getPossibleMoves(board).forEach((move) => {
+        board[move["row"]][move["col"]] = currentPlayer;
 
-      board[move["row"]][move["col"]] = "";
+        let score = minimax(board, 0, player2.getSymbol());
 
-      if (score < bestScore) {
-        bestScore = score;
-        bestMove = move;
-      }
-    });
+        board[move["row"]][move["col"]] = "";
+
+        if (score > bestScore) {
+          bestScore = score;
+          bestMove = move;
+        }
+      });
+    } else {
+      bestScore = Infinity;
+
+      getPossibleMoves(board).forEach((move) => {
+        board[move["row"]][move["col"]] = currentPlayer;
+
+        let score = minimax(board, 0, player1.getSymbol());
+
+        board[move["row"]][move["col"]] = "";
+
+        if (score < bestScore) {
+          bestScore = score;
+          bestMove = move;
+        }
+      });
+    }
 
     return bestMove;
   };
@@ -401,6 +409,9 @@ const game = (() => {
   const isPlayer1Turn = () => turn % 2 === 0;
 
   const resetGame = () => {
+    // Reset current player
+    currentPlayer = player1.getSymbol();
+
     // Reset turn
     turn = 0;
 
@@ -410,11 +421,8 @@ const game = (() => {
     // Reset versus selection
     enableButton(document.querySelector("#versus"));
 
-    // Enable play button
-    enableButton(playButton);
-
-    // Disable board
-    gameboard.disableTiles();
+    // Enable tiles
+    gameboard.enableTiles();
 
     // Reset player selection
     if (currentOpponent !== playerOpponent) {
@@ -592,12 +600,8 @@ const game = (() => {
     resetGame,
     setupOpponent,
     setupPlayer,
-    playGame,
   };
 })();
-
-const playButton = document.getElementById("play");
-playButton.addEventListener("click", game.playGame);
 
 const reset = document.getElementById("reset");
 reset.addEventListener("click", game.resetGame);
