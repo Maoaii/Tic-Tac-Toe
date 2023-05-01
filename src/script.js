@@ -17,6 +17,7 @@ const game = (() => {
   const gameContainer = document.getElementById("game-container");
   const player1 = Player("Player1", "X");
   const player2 = Player("Player2", "O");
+  // Magic board for win calculation
   const magicBoard = [
     [2, 7, 6],
     [9, 5, 1],
@@ -57,6 +58,7 @@ const game = (() => {
 
           colIndex++;
         });
+
         rowIndex++;
       });
     };
@@ -104,16 +106,6 @@ const game = (() => {
     };
   })();
 
-  const disableButton = (button) => {
-    button.classList.add("disabled");
-    button.disabled = true;
-  };
-
-  const enableButton = (button) => {
-    button.classList.remove("disabled");
-    button.disabled = false;
-  };
-
   const displayBoard = () => {
     gameboard.display();
 
@@ -151,29 +143,6 @@ const game = (() => {
     if (playerIsSecond()) botTurn();
   };
 
-  const playerIsSecond = () => {
-    return playerSymbol === player2.getSymbol();
-  };
-
-  const disablePlayerSelection = () => {
-    [xSymbol, oSymbol].forEach((btn) => {
-      btn.classList.add("disabled");
-      btn.disabled = true;
-    });
-  };
-
-  const enablePlayerSelection = () => {
-    [xSymbol, oSymbol].forEach((btn) => {
-      btn.classList.remove("disabled");
-      btn.disabled = false;
-    });
-
-    xSymbol.classList.add("selected");
-    oSymbol.classList.remove("selected");
-    playerSymbol = player1.getSymbol();
-    opponentSymbol = player2.getSymbol();
-  };
-
   const playTurn = (event) => {
     const tile = event.target;
     const tileRow = tile.getAttribute("data-row");
@@ -185,10 +154,27 @@ const game = (() => {
     }
   };
 
-  const disableVersusSelection = () => {
-    const versus = document.querySelector("#versus");
-    versus.classList.add("disabled");
-    versus.disabled = true;
+  const endTurn = () => {
+    isPlaying = true;
+    isPlayer1 = !isPlayer1;
+    currentPlayer =
+      currentPlayer === playerSymbol ? opponentSymbol : playerSymbol;
+
+    updateTurnText();
+
+    if (isPlaying) {
+      disablePlayerSelection();
+      disableVersusSelection();
+    }
+
+    // Check if game is over
+    if (isGameOver(gameboard.getBoard())) {
+      gameboard.disableTiles();
+
+      return;
+    } else if (playingAgainstBot() && isOpponentTurn()) {
+      botTurn();
+    }
   };
 
   const botTurn = () => {
@@ -333,27 +319,8 @@ const game = (() => {
     return freeSpaces;
   };
 
-  const endTurn = () => {
-    isPlaying = true;
-    isPlayer1 = !isPlayer1;
-    currentPlayer =
-      currentPlayer === playerSymbol ? opponentSymbol : playerSymbol;
-
-    updateTurnText();
-
-    if (isPlaying) {
-      disablePlayerSelection();
-      disableVersusSelection();
-    }
-
-    // Check if game is over
-    if (isGameOver(gameboard.getBoard())) {
-      gameboard.disableTiles();
-
-      return;
-    } else if (playingAgainstBot() && isOpponentTurn()) {
-      botTurn();
-    }
+  const playerIsSecond = () => {
+    return playerSymbol === player2.getSymbol();
   };
 
   const isOpponentTurn = () => {
@@ -362,6 +329,39 @@ const game = (() => {
 
   const playingAgainstBot = () => {
     return currentOpponent != playerOpponent;
+  };
+
+  const disableButton = (button) => {
+    button.classList.add("disabled");
+    button.disabled = true;
+  };
+
+  const enableButton = (button) => {
+    button.classList.remove("disabled");
+    button.disabled = false;
+  };
+
+  const disablePlayerSelection = () => {
+    [xSymbol, oSymbol].forEach((btn) => {
+      disableButton(btn);
+    });
+  };
+
+  const enablePlayerSelection = () => {
+    [xSymbol, oSymbol].forEach((btn) => {
+      enableButton(btn);
+    });
+
+    xSymbol.classList.add("selected");
+    oSymbol.classList.remove("selected");
+    playerSymbol = player1.getSymbol();
+    opponentSymbol = player2.getSymbol();
+  };
+
+  const disableVersusSelection = () => {
+    const versus = document.querySelector("#versus");
+    versus.classList.add("disabled");
+    versus.disabled = true;
   };
 
   const updateTurnText = () => {
