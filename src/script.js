@@ -17,18 +17,19 @@ const game = (() => {
   const gameContainer = document.getElementById("game-container");
   const player1 = Player("Player1", "X");
   const player2 = Player("Player2", "O");
+  // Magic board for win calculation
   const magicBoard = [
     [2, 7, 6],
     [9, 5, 1],
     [4, 3, 8],
   ];
 
+  let isPlayer1 = true;
   let playerSymbol = "X";
   let opponentSymbol = "O";
   let currentOpponent = "player";
   let currentPlayer = "X";
-  let turn = 0;
-  let bestMove = null;
+  let isPlaying = false;
 
   const gameboard = (() => {
     let gameboard = [
@@ -37,6 +38,9 @@ const game = (() => {
       ["", "", ""],
     ];
 
+    /**
+     * Displays the current board
+     */
     const display = () => {
       let rowIndex = 0;
 
@@ -57,18 +61,27 @@ const game = (() => {
 
           colIndex++;
         });
+
         rowIndex++;
       });
     };
 
+    /**
+     * @returns the current board
+     */
     const getBoard = () => gameboard;
 
-    const getRow = (rowIndex) => gameboard[rowIndex];
-
+    /**
+     * @param {*} row - row of the tile to change
+     * @param {*} col - columns of the tile to change
+     * @param {*} symbol - symbol to change to
+     * @returns the new board
+     */
     const changeTile = (row, col, symbol) => (gameboard[row][col] = symbol);
 
-    const printBoard = () => console.log(gameboard);
-
+    /**
+     * Resets the current board
+     */
     const resetBoard = () => {
       gameboard = [
         ["", "", ""],
@@ -82,6 +95,9 @@ const game = (() => {
       });
     };
 
+    /**
+     * Disables the board tiles from being clicked
+     */
     const disableTiles = () => {
       const tiles = document.querySelectorAll(".tile");
       tiles.forEach((tile) => {
@@ -90,6 +106,9 @@ const game = (() => {
       });
     };
 
+    /**
+     * Enables the board tiles to be clicked
+     */
     const enableTiles = () => {
       const tiles = document.querySelectorAll(".tile");
       tiles.forEach((tile) => {
@@ -101,25 +120,16 @@ const game = (() => {
     return {
       display,
       getBoard,
-      getRow,
       changeTile,
       resetBoard,
       disableTiles,
       enableTiles,
-      printBoard,
     };
   })();
 
-  const disableButton = (button) => {
-    button.classList.add("disabled");
-    button.disabled = true;
-  };
-
-  const enableButton = (button) => {
-    button.classList.remove("disabled");
-    button.disabled = false;
-  };
-
+  /**
+   * Displays the board on the screen and adds event listeners to the tiles
+   */
   const displayBoard = () => {
     gameboard.display();
 
@@ -128,22 +138,32 @@ const game = (() => {
     tiles.forEach((tile) => tile.addEventListener("click", playTurn));
   };
 
-  const initGame = () => {
-    // Reset game
-    resetGame();
-  };
-
+  /**
+   * @param {*} event - type of opponent choosen, player, easy, hard or unbeatable
+   */
   const setupOpponent = (event) => {
     currentOpponent = event.target.value;
 
-    if (currentOpponent === playerOpponent) {
+    if (isPvP()) {
       disablePlayerSelection();
     } else {
       enablePlayerSelection();
     }
   };
 
+  /**
+   * @returns true if playing agains a player, false otherwise
+   */
+  const isPvP = () => {
+    return currentOpponent === playerOpponent;
+  };
+
+  /**
+   *
+   * @param {*} event - type of player choosen, X or O
+   */
   const setupPlayer = (event) => {
+    // Setup symbol
     playerSymbol = event.target.value;
 
     // Add selected styling on clicked button
@@ -159,94 +179,79 @@ const game = (() => {
     opponentSymbol = other.value;
 
     // If user wants to be second, make AI play
-    if (playerSymbol === player2.getSymbol() && playingAgainstBot()) {
-      botTurn();
-    }
+    if (playerIsSecond()) botTurn();
   };
 
-  const disablePlayerSelection = () => {
-    [xSymbol, oSymbol].forEach((btn) => {
-      btn.classList.add("disabled");
-      btn.disabled = true;
-    });
-  };
-
-  const enablePlayerSelection = () => {
-    [xSymbol, oSymbol].forEach((btn) => {
-      btn.classList.remove("disabled");
-      btn.disabled = false;
-    });
-
-    xSymbol.classList.add("selected");
-    oSymbol.classList.remove("selected");
-    playerSymbol = player1.getSymbol();
-    opponentSymbol = player2.getSymbol();
-  };
-
+  /**
+   * If player clicks on an empty tile, update the board
+   *
+   * @param {*} event - tile clicked by player
+   */
   const playTurn = (event) => {
     const tile = event.target;
     const tileRow = tile.getAttribute("data-row");
     const tileCol = tile.getAttribute("data-col");
 
     if (tile.textContent === "") {
-      makePlay(currentPlayer, tileRow, tileCol, tile);
-      endTurn(tileRow, tileCol);
+      updateBoard(currentPlayer, tileRow, tileCol, tile);
+      endTurn();
     }
-    if (turn > 0) {
+  };
+
+  /**
+   * Alters state variables and passes the turn to the next player
+   *
+   * @returns if game is over after the turn
+   */
+  const endTurn = () => {
+    // Update state variables
+    isPlaying = true;
+    isPlayer1 = !isPlayer1;
+    currentPlayer =
+      currentPlayer === playerSymbol ? opponentSymbol : playerSymbol;
+
+    updateTurnText();
+
+    // Disable stuff if first turn
+    if (isPlaying) {
       disablePlayerSelection();
       disableVersusSelection();
     }
+
+    // Check if game is over
+    if (isGameOver(gameboard.getBoard())) {
+      gameboard.disableTiles();
+
+      return;
+    } else if (playingAgainstBot() && isOpponentTurn()) {
+      botTurn();
+    }
   };
 
-  const disableVersusSelection = () => {
-    const versus = document.querySelector("#versus");
-    versus.classList.add("disabled");
-    versus.disabled = true;
-  };
-
+  /**
+   * AI turn, based on opponent choosen
+   */
   const botTurn = () => {
-    let tile;
+    let move;
+
+    // Depending on the choosen bot, play a different move
     switch (currentOpponent) {
       case easyOpponent:
-        let randomMove = getRandomMove();
-
-        tile = document.querySelector(
-          `button[data-row='${randomMove["row"]}'][data-col='${randomMove["col"]}']`
-        );
-
-        // Make a play on the square with that index
-        makePlay(currentPlayer, randomMove["row"], randomMove["col"], tile);
-        endTurn(randomMove["row"], randomMove["col"]);
+        move = getRandomMove();
 
         break;
 
       case hardOpponent:
-        let move;
-
         if (Math.random() > 0.8) {
           move = getBestMove();
         } else {
           move = getRandomMove();
         }
 
-        tile = document.querySelector(
-          `button[data-row='${move["row"]}'][data-col='${move["col"]}']`
-        );
-
-        makePlay(currentPlayer, move["row"], move["col"], tile);
-        endTurn(move["row"], move["col"]);
-
         break;
 
       case unbeatableOpponent:
-        let bestMove = getBestMove();
-
-        tile = document.querySelector(
-          `button[data-row='${bestMove["row"]}'][data-col='${bestMove["col"]}']`
-        );
-
-        makePlay(currentPlayer, bestMove["row"], bestMove["col"], tile);
-        endTurn(bestMove["row"], bestMove["col"]);
+        move = getBestMove();
 
         break;
 
@@ -255,12 +260,18 @@ const game = (() => {
         break;
     }
 
-    if (turn > 0) {
-      disablePlayerSelection();
-      disableVersusSelection();
-    }
+    const tile = document.querySelector(
+      `button[data-row='${move["row"]}'][data-col='${move["col"]}']`
+    );
+
+    // Make a play on the square with that index
+    updateBoard(currentPlayer, move["row"], move["col"], tile);
+    endTurn();
   };
 
+  /**
+   * @returns a random possible move
+   */
   const getRandomMove = () => {
     // Store index of all free spaces
     let possibleMoves = getPossibleMoves(gameboard.getBoard());
@@ -269,36 +280,51 @@ const game = (() => {
     return possibleMoves[Math.floor(Math.random() * possibleMoves.length)];
   };
 
+  /**
+   * @returns the best possible move
+   */
   const getBestMove = () => {
     let board = gameboard.getBoard();
     let bestScore;
     let bestMove;
 
+    // This player is maximizing
     if (currentPlayer === player1.getSymbol()) {
       bestScore = -Infinity;
 
+      // For each possible move, check its' score for the player
       getPossibleMoves(board).forEach((move) => {
+        // Make the play
         board[move["row"]][move["col"]] = currentPlayer;
 
+        // Check if the games down the tree are good
         let score = minimax(board, 0, player2.getSymbol());
 
+        // Remove play
         board[move["row"]][move["col"]] = "";
 
+        // If the games down the tree show a win, update best move
         if (score > bestScore) {
           bestScore = score;
           bestMove = move;
         }
       });
-    } else {
+    }
+    // This player is minimizing
+    else {
       bestScore = Infinity;
 
       getPossibleMoves(board).forEach((move) => {
+        // Make the play
         board[move["row"]][move["col"]] = currentPlayer;
 
+        // Check if the games down the tree are good
         let score = minimax(board, 0, player1.getSymbol());
 
+        // Remove play
         board[move["row"]][move["col"]] = "";
 
+        // If the games down the tree show a win, update best move
         if (score < bestScore) {
           bestScore = score;
           bestMove = move;
@@ -309,6 +335,12 @@ const game = (() => {
     return bestMove;
   };
 
+  /**
+   * @param {*} boardState - current state of the board
+   * @param {*} depth - depth of recursive search
+   * @param {*} player - player maximizing or minimizing the play
+   * @returns the score of the outcome
+   */
   const minimax = (boardState, depth, player) => {
     // Check if anyone won
     let result = checkWinner(boardState);
@@ -316,36 +348,47 @@ const game = (() => {
       return result;
     }
 
-    if (player === "O") {
-      let bestScore = Infinity;
-      let bestMove = {};
+    // This player is maximizing
+    if (player === player1.getSymbol()) {
+      let bestScore = -Infinity;
 
+      // For each possible move, check its' score for the player
       getPossibleMoves(boardState).forEach((move) => {
-        boardState[move.row][move.col] = "O";
+        // Make the play
+        boardState[move.row][move.col] = player;
 
-        let score = minimax(boardState, depth + 1, "X");
+        // Check if the games down the tree are good
+        let score = minimax(boardState, depth + 1, player2.getSymbol());
 
+        // Remove play
         boardState[move.row][move.col] = "";
 
-        if (score < bestScore) {
+        // If the games down the tree show a win, update best move
+        if (score > bestScore) {
           bestScore = score;
           bestMove = { row: move.row, col: move.col };
         }
       });
 
       return bestScore;
-    } else {
-      let bestScore = -Infinity;
-      let bestMove = {};
+    }
+    // This player is minimizing
+    else {
+      let bestScore = Infinity;
 
+      // For each possible move, check its' score for the player
       getPossibleMoves(boardState).forEach((move) => {
-        boardState[move.row][move.col] = "X";
+        // Make the play
+        boardState[move.row][move.col] = player;
 
-        let score = minimax(boardState, depth + 1, "O");
+        // Check if the games down the tree are good
+        let score = minimax(boardState, depth + 1, player1.getSymbol());
 
+        // Remove play
         boardState[move.row][move.col] = "";
 
-        if (score > bestScore) {
+        // If the games down the tree show a win, update best move
+        if (score < bestScore) {
           bestScore = score;
           bestMove = { row: move.row, col: move.col };
         }
@@ -355,6 +398,10 @@ const game = (() => {
     }
   };
 
+  /**
+   * @param {*} boardState - current state of the board
+   * @returns the possible moves on the current state of the board
+   */
   const getPossibleMoves = (boardState) => {
     let freeSpaces = [];
 
@@ -368,61 +415,135 @@ const game = (() => {
     return freeSpaces;
   };
 
-  const makePlay = (symbol, row, col, tile) => {
-    updateBoard(symbol, row, col, tile);
-    gameboard.changeTile(row, col, symbol);
+  /**
+   * @returns true if player is second to play, false otherwise
+   */
+  const playerIsSecond = () => {
+    return playerSymbol === player2.getSymbol();
   };
 
-  const endTurn = (row, col) => {
-    turn++;
-    currentPlayer =
-      currentPlayer === playerSymbol ? opponentSymbol : playerSymbol;
-
-    updateTurnText();
-
-    // Check if game is over
-    if (isGameOver(gameboard.getBoard(), row, col)) return;
-    else if (playingAgainstBot() && isOpponentTurn()) {
-      botTurn();
-    }
-  };
-
+  /**
+   * @returns true if it's the opponent's turn, false otherwise
+   */
   const isOpponentTurn = () => {
     return currentPlayer === opponentSymbol;
   };
 
+  /**
+   * @returns true if current opponent is an AI, false otherwise
+   */
   const playingAgainstBot = () => {
     return currentOpponent != playerOpponent;
   };
 
-  const updateTurnText = () => {
-    const text = document.querySelector("#turn-text");
-    if (isPlayer1Turn()) text.textContent = `${player1.getName()}'s turn`;
-    else text.textContent = `${player2.getName()}'s turn`;
+  /**
+   * Disables button and turns down the opacity
+   *
+   * @param {*} button - button to be disabled
+   */
+  const disableButton = (button) => {
+    button.classList.add("disabled");
+    button.disabled = true;
   };
 
+  /**
+   * Enables button and turns up the opacity
+   *
+   * @param {*} button - button to be enabled
+   */
+  const enableButton = (button) => {
+    button.classList.remove("disabled");
+    button.disabled = false;
+  };
+
+  /**
+   * Disables the player selection controls
+   */
+  const disablePlayerSelection = () => {
+    [xSymbol, oSymbol].forEach((btn) => {
+      disableButton(btn);
+    });
+  };
+
+  /**
+   * Enables the player selection controls
+   */
+  const enablePlayerSelection = () => {
+    [xSymbol, oSymbol].forEach((btn) => {
+      enableButton(btn);
+    });
+
+    xSymbol.classList.add("selected");
+    oSymbol.classList.remove("selected");
+    playerSymbol = player1.getSymbol();
+    opponentSymbol = player2.getSymbol();
+  };
+
+  /**
+   * Disables the versus selection controls
+   */
+  const disableVersusSelection = () => {
+    const versus = document.querySelector("#versus");
+    versus.classList.add("disabled");
+    versus.disabled = true;
+  };
+
+  /**
+   * Updates the current turn's text element
+   */
+  const updateTurnText = () => {
+    const text = document.querySelector("#turn-text");
+
+    text.textContent = `${
+      isPlayer1 ? player1.getName() : player2.getName()
+    }'s turn`;
+  };
+
+  /**
+   * Updates the current board with a new play
+   *
+   * @param {*} symbol - symbol to place on board
+   * @param {*} rowIndex - row to place symbol
+   * @param {*} colIndex - column to place symbol
+   * @param {*} tile - tile to place symbol
+   */
   const updateBoard = (symbol, rowIndex, colIndex, tile) => {
     tile.textContent = symbol;
     gameboard.changeTile(rowIndex, colIndex, symbol);
   };
 
-  const isPlayer1Turn = () => turn % 2 === 0;
-
+  /**
+   * Resets:
+   * - playing states;
+   * - turns
+   * - turn text
+   * - gameboard
+   * - game tiles
+   * - versus selection controls
+   * - player selection controls if playing agains an AI
+   */
   const resetGame = () => {
+    // Reset playing state
+    isPlaying = false;
+
     // Reset current player
     currentPlayer = player1.getSymbol();
 
     // Reset turn
     turn = 0;
 
+    // Reset turn text
+    const text = document.querySelector("#turn-text");
+    text.textContent = `${player1.getName()}'s turn`;
+
     // Reset gameboard
     gameboard.resetBoard();
 
-    // Reset versus selection
-    enableButton(document.querySelector("#versus"));
-
     // Enable tiles
     gameboard.enableTiles();
+
+    // Reset versus selection
+    enableButton(document.querySelector("#versus"));
 
     // Reset player selection
     if (currentOpponent !== playerOpponent) {
@@ -430,69 +551,30 @@ const game = (() => {
     } else {
       disablePlayerSelection();
     }
-
-    // Reset turn text
-    const text = document.querySelector("#turn-text");
-    text.textContent = `${player1.getName()}'s turn`;
   };
 
-  const isGameOver = (boardState, rowIndex, colIndex) => {
-    const winner = checkWinnerFromPlay(boardState, rowIndex, colIndex);
-
-    if (isTie(boardState) || winner !== 0) {
-      switch (winner) {
-        case 15:
-          showWinner(player1.getName());
-          break;
-        case -15:
-          showWinner(player2.getName());
-          break;
-        default:
-          if (isTie(boardState)) {
-            showWinner("");
-          }
-          break;
-      }
-      gameboard.disableTiles();
-
-      return true;
-    }
-
-    return false;
-  };
-
-  // Returns 15 if player 1 wins, -15 if player 2 wins, 0 if no winner
+  /**
+   * @param {*} boardState - current state of the board
+   * @returns 15 if player1 wins, -15 if player2 wins, 0 if no one wins
+   */
   const checkWinner = (boardState) => {
-    for (let i = 0; i < 3; i++) {
-      for (let j = 0; j < 3; j++) {
-        let winner = checkWinnerFromPlay(boardState, i, j);
-        if (winner != 0) {
-          return winner;
-        }
-      }
-    }
-
-    return 0;
-  };
-
-  const checkWinnerFromPlay = (boardState, rowIndex, colIndex) => {
     let sums = [];
 
     // Calculate rows
-    sums.push(calculateRow(boardState[rowIndex], rowIndex));
+    for (let rowIndex = 0; rowIndex < 3; rowIndex++) {
+      sums.push(calculateRow(boardState[rowIndex], rowIndex));
+    }
 
     // Calculate columns
-    sums.push(calculateCol(boardState, colIndex));
+    for (let colIndex = 0; colIndex < 3; colIndex++) {
+      sums.push(calculateCol(boardState, colIndex));
+    }
 
     // Calculate diagonal
-    if (rowIndex == colIndex) {
-      sums.push(calculateDiag(boardState));
-    }
+    sums.push(calculateDiag(boardState));
 
     // Calculate anti diagonal
-    if (+rowIndex + +colIndex === 2) {
-      sums.push(calculateAntiDiag(boardState));
-    }
+    sums.push(calculateAntiDiag(boardState));
 
     // Check if there's any calculation (= 15 || = -15)
     let winner = 0;
@@ -512,6 +594,11 @@ const game = (() => {
     return winner;
   };
 
+  /**
+   * Displays the current winner
+   *
+   * @param {*} winner - current winner
+   */
   const showWinner = (winner) => {
     const text = document.querySelector("#turn-text");
 
@@ -522,6 +609,11 @@ const game = (() => {
     }
   };
 
+  /**
+   * @param {*} row - row to calculate
+   * @param {*} rowIndex - row index to calculate
+   * @returns the magic board sum of that row
+   */
   const calculateRow = (row, rowIndex) => {
     let rowSum = 0;
 
@@ -535,6 +627,11 @@ const game = (() => {
     return rowSum;
   };
 
+  /**
+   * @param {*} boardState - current state of the board
+   * @param {*} rowIndex - column index to calculate
+   * @returns the magic board sum of that row
+   */
   const calculateCol = (boardState, colIndex) => {
     let colSum = 0;
 
@@ -550,6 +647,10 @@ const game = (() => {
     return colSum;
   };
 
+  /**
+   * @param {*} boardState - current state of the board
+   * @returns the magic board sum of that diag
+   */
   const calculateDiag = (boardState) => {
     let diagSum = 0;
 
@@ -563,6 +664,10 @@ const game = (() => {
     return diagSum;
   };
 
+  /**
+   * @param {*} boardState - current state of the board
+   * @returns the magic board sum of that antidiag
+   */
   const calculateAntiDiag = (boardState) => {
     let antiDiagSum = 0;
     let colIndex = 2;
@@ -581,22 +686,52 @@ const game = (() => {
     return antiDiagSum;
   };
 
-  const isTie = (boardState) => {
-    let occupied = 0;
+  /**
+   * @param {*} boardState - current state of the board
+   * @returns true if game is over: tie or someone wins; false otherwise
+   */
+  const isGameOver = (boardState) => {
+    const winner = checkWinner(boardState);
 
+    if (isTie(boardState) || winner !== 0) {
+      switch (winner) {
+        case 15:
+          showWinner(player1.getName());
+          break;
+        case -15:
+          showWinner(player2.getName());
+          break;
+        default:
+          if (isTie(boardState)) {
+            showWinner("");
+          }
+          break;
+      }
+
+      return true;
+    }
+
+    return false;
+  };
+
+  /**
+   *
+   * @param {*} boardState - current state of the board
+   * @returns true if it's a tie, false otherwise
+   */
+  const isTie = (boardState) => {
     for (let i = 0; i < 3; i++) {
       for (let j = 0; j < 3; j++) {
-        if (boardState[i][j] !== "") {
-          occupied++;
+        if (boardState[i][j] === "") {
+          return false;
         }
       }
     }
-    return occupied === 9;
+    return true;
   };
 
   return {
     displayBoard,
-    initGame,
     resetGame,
     setupOpponent,
     setupPlayer,
@@ -614,6 +749,5 @@ oSymbol.addEventListener("click", game.setupPlayer);
 const opponent = document.getElementById("versus");
 opponent.addEventListener("change", game.setupOpponent);
 
-
 game.displayBoard();
-game.initGame();
+game.resetGame();
