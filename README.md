@@ -15,9 +15,6 @@
 <!-- PROJECT LOGO -->
 <br />
 <div align="center">
-  <a href="https://github.com/Maoaii/Tic-Tac-Toe">
-    <img src="./img/icon.png" alt="Logo" width="80" height="80">
-  </a>
 
 <h3 align="center">Tic-Tac-Toe</h3>
 
@@ -50,7 +47,25 @@
 ## About The Project
 
 HomePage
-<img src="./public/assets/img/screenshots/1.png">
+<img src="./img/screenshots/Homepage.png">
+<br />
+<br />
+<br />
+
+Opponent selection
+<img src="./img/screenshots/OpponentSelection.png">
+<br />
+<br />
+<br />
+
+Win state example
+<img src="./img/screenshots/WinState.png">
+<br />
+<br />
+<br />
+
+Draw state example, playing as second.
+<img src="./img/screenshots/BotDraw.png">
 <br />
 <br />
 <br />
