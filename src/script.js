@@ -1,8 +1,7 @@
-import { Gameboard } from "./gameboard.js";
-import { Player } from "./player.js";
-import { AI } from "./ai.js";
-import { MagicBoard } from "./magicBoard.js";
-import { Controls } from "./controls.js";
+import { Gameboard } from "./modules/gameboard.js";
+import { AI } from "./modules/ai.js";
+import { MagicBoard } from "./modules/magicBoard.js";
+import { Controls } from "./modules/controls.js";
 
 const game = (() => {
   const player1 = "X";
