@@ -1,14 +1,6 @@
 import { Gameboard } from "./gameboard.js";
+import { Player } from "./player.js";
 
-const Player = (name, symbol) => {
-  const getName = () => name;
-  const getSymbol = () => symbol;
-
-  return {
-    getName,
-    getSymbol,
-  };
-};
 
 const game = (() => {
   const playerOpponent = "player";
