@@ -1,11 +1,13 @@
-const Player = (name, symbol) => {
-    const getName = () => name;
-    const getSymbol = () => symbol;
+import { Gameboard } from "./gameboard.js";
 
-    return {
-        getName,
-        getSymbol,
-    }
+const Player = (name, symbol) => {
+  const getName = () => name;
+  const getSymbol = () => symbol;
+
+  return {
+    getName,
+    getSymbol,
+  };
 };
 
 const game = (() => {
@@ -14,7 +16,6 @@ const game = (() => {
   const hardOpponent = "hard";
   const unbeatableOpponent = "unbeatable";
 
-  const gameContainer = document.getElementById("game-container");
   const player1 = Player("Player1", "X");
   const player2 = Player("Player2", "O");
   // Magic board for win calculation
@@ -24,108 +25,13 @@ const game = (() => {
     [4, 3, 8],
   ];
 
+  let gameboard = Gameboard();
   let isPlayer1 = true;
   let playerSymbol = "X";
   let opponentSymbol = "O";
   let currentOpponent = "player";
   let currentPlayer = "X";
   let isPlaying = false;
-
-  const gameboard = (() => {
-    let gameboard = [
-      ["", "", ""],
-      ["", "", ""],
-      ["", "", ""],
-    ];
-
-    /**
-     * Displays the current board
-     */
-    const display = () => {
-      let rowIndex = 0;
-
-      gameboard.forEach((row) => {
-        let colIndex = 0;
-
-        row.forEach((tile) => {
-          const tileElement = document.createElement("button");
-
-          tileElement.classList.add("tile");
-
-          tileElement.setAttribute("data-row", rowIndex);
-          tileElement.setAttribute("data-col", colIndex);
-
-          tileElement.textContent = tile;
-
-          gameContainer.appendChild(tileElement);
-
-          colIndex++;
-        });
-
-        rowIndex++;
-      });
-    };
-
-    /**
-     * @returns the current board
-     */
-    const getBoard = () => [...gameboard];
-
-    /**
-     * @param {*} row - row of the tile to change
-     * @param {*} col - columns of the tile to change
-     * @param {*} symbol - symbol to change to
-     * @returns the new board
-     */
-    const changeTile = (row, col, symbol) => (gameboard[row][col] = symbol);
-
-    /**
-     * Resets the current board
-     */
-    const resetBoard = () => {
-      gameboard = [
-        ["", "", ""],
-        ["", "", ""],
-        ["", "", ""],
-      ];
-
-      const tiles = document.querySelectorAll(".tile");
-      tiles.forEach((tile) => {
-        tile.textContent = "";
-      });
-    };
-
-    /**
-     * Disables the board tiles from being clicked
-     */
-    const disableTiles = () => {
-      const tiles = document.querySelectorAll(".tile");
-      tiles.forEach((tile) => {
-        tile.disabled = true;
-        tile.classList.add("disabled");
-      });
-    };
-
-    /**
-     * Enables the board tiles to be clicked
-     */
-    const enableTiles = () => {
-      const tiles = document.querySelectorAll(".tile");
-      tiles.forEach((tile) => {
-        tile.disabled = false;
-        tile.classList.remove("disabled");
-      });
-    };
-
-    return {
-      display,
-      getBoard,
-      changeTile,
-      resetBoard,
-      disableTiles,
-      enableTiles,
-    };
-  })();
 
   /**
    * Displays the board on the screen and adds event listeners to the tiles
@@ -370,7 +276,6 @@ const game = (() => {
         // If the games down the tree show a win, update best move
         if (score > bestScore) {
           bestScore = score;
-          bestMove = { row: move.row, col: move.col };
         }
       });
 
@@ -394,7 +299,6 @@ const game = (() => {
         // If the games down the tree show a win, update best move
         if (score < bestScore) {
           bestScore = score;
-          bestMove = { row: move.row, col: move.col };
         }
       });
 
@@ -532,9 +436,6 @@ const game = (() => {
 
     // Reset current player
     currentPlayer = player1.getSymbol();
-
-    // Reset turn
-    turn = 0;
 
     // Reset turn text
     const text = document.querySelector("#turn-text");
