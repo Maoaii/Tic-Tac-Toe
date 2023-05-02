@@ -2,20 +2,20 @@ import { Gameboard } from "./gameboard.js";
 import { Player } from "./player.js";
 import { AI } from "./ai.js";
 import { MagicBoard } from "./magicBoard.js";
+import { Controls } from "./controls.js";
 
 const game = (() => {
-  const playerOpponent = "player";
-  const player1 = Player("Player1", "X");
-  const player2 = Player("Player2", "O");
+  const player1 = "X";
+  const player2 = "O";
   const ai = AI();
   const gameboard = Gameboard();
   const magicBoard = MagicBoard();
+  const controls = Controls();
 
-  let isPlayer1 = true;
   let playerSymbol = "X";
   let opponentSymbol = "O";
-  let currentOpponent = "player";
-  let currentPlayer = "X";
+  let currentPlayer = playerSymbol;
+  let playingAgainstBot = false;
   let isPlaying = false;
 
   /**
@@ -33,21 +33,14 @@ const game = (() => {
    * @param {*} event - type of opponent choosen, player, easy, hard or unbeatable
    */
   const setupOpponent = (event) => {
-    currentOpponent = event.target.value;
+    playingAgainstBot = event.target !== "player";
 
-    if (isPvP()) {
-      disablePlayerSelection();
+    if (!playingAgainstBot) {
+      controls.disablePlayerSelection();
     } else {
       ai.setupDifficulty(event.target.value);
-      enablePlayerSelection();
+      controls.enablePlayerSelection();
     }
-  };
-
-  /**
-   * @returns true if playing agains a player, false otherwise
-   */
-  const isPvP = () => {
-    return currentOpponent === playerOpponent;
   };
 
   /**
@@ -59,16 +52,9 @@ const game = (() => {
     playerSymbol = event.target.value;
 
     // Add selected styling on clicked button
-    event.target.classList.add("selected");
+    controls.updatePlayerSelection(event.target);
 
-    // Remove selected styling on the other button
-    const other =
-      playerSymbol === player1.getSymbol()
-        ? document.querySelector(".O")
-        : document.querySelector(".X");
-    other.classList.remove("selected");
-
-    opponentSymbol = other.value;
+    opponentSymbol = playerSymbol === player1 ? player2 : player1;
 
     // If user wants to be second, make AI play
     if (playerIsSecond()) botTurn();
@@ -80,12 +66,8 @@ const game = (() => {
    * @param {*} event - tile clicked by player
    */
   const playTurn = (event) => {
-    const tile = event.target;
-    const tileRow = tile.getAttribute("data-row");
-    const tileCol = tile.getAttribute("data-col");
-
-    if (tile.textContent === "") {
-      updateBoard(currentPlayer, tileRow, tileCol, tile);
+    if (gameboard.isTileEmpty(event.target)) {
+      gameboard.updateBoard(currentPlayer, event.target);
       endTurn();
     }
   };
@@ -98,16 +80,15 @@ const game = (() => {
   const endTurn = () => {
     // Update state variables
     isPlaying = true;
-    isPlayer1 = !isPlayer1;
     currentPlayer =
       currentPlayer === playerSymbol ? opponentSymbol : playerSymbol;
 
-    updateTurnText();
+    controls.updateTurnText(currentPlayer === player1);
 
     // Disable stuff if first turn
     if (isPlaying) {
-      disablePlayerSelection();
-      disableVersusSelection();
+      controls.disablePlayerSelection();
+      controls.disableVersusSelection();
     }
 
     // Check if game is over
@@ -115,7 +96,7 @@ const game = (() => {
       gameboard.disableTiles();
 
       return;
-    } else if (playingAgainstBot() && isOpponentTurn()) {
+    } else if (playingAgainstBot && isOpponentTurn()) {
       botTurn();
     }
   };
@@ -131,7 +112,7 @@ const game = (() => {
     );
 
     // Make a play on the square with that index
-    updateBoard(currentPlayer, move["row"], move["col"], tile);
+    gameboard.updateBoard(currentPlayer, tile);
     endTurn();
   };
 
@@ -139,7 +120,7 @@ const game = (() => {
    * @returns true if player is second to play, false otherwise
    */
   const playerIsSecond = () => {
-    return playerSymbol === player2.getSymbol();
+    return playerSymbol === player2;
   };
 
   /**
@@ -147,88 +128,6 @@ const game = (() => {
    */
   const isOpponentTurn = () => {
     return currentPlayer === opponentSymbol;
-  };
-
-  /**
-   * @returns true if current opponent is an AI, false otherwise
-   */
-  const playingAgainstBot = () => {
-    return currentOpponent != playerOpponent;
-  };
-
-  /**
-   * Disables button and turns down the opacity
-   *
-   * @param {*} button - button to be disabled
-   */
-  const disableButton = (button) => {
-    button.classList.add("disabled");
-    button.disabled = true;
-  };
-
-  /**
-   * Enables button and turns up the opacity
-   *
-   * @param {*} button - button to be enabled
-   */
-  const enableButton = (button) => {
-    button.classList.remove("disabled");
-    button.disabled = false;
-  };
-
-  /**
-   * Disables the player selection controls
-   */
-  const disablePlayerSelection = () => {
-    [xSymbol, oSymbol].forEach((btn) => {
-      disableButton(btn);
-    });
-  };
-
-  /**
-   * Enables the player selection controls
-   */
-  const enablePlayerSelection = () => {
-    [xSymbol, oSymbol].forEach((btn) => {
-      enableButton(btn);
-    });
-
-    xSymbol.classList.add("selected");
-    oSymbol.classList.remove("selected");
-    playerSymbol = player1.getSymbol();
-    opponentSymbol = player2.getSymbol();
-  };
-
-  /**
-   * Disables the versus selection controls
-   */
-  const disableVersusSelection = () => {
-    const versus = document.querySelector("#versus");
-    versus.classList.add("disabled");
-    versus.disabled = true;
-  };
-
-  /**
-   * Updates the current turn's text element
-   */
-  const updateTurnText = () => {
-    const text = document.querySelector("#turn-text");
-
-    text.textContent = `${
-      isPlayer1 ? player1.getName() : player2.getName()
-    }'s turn`;
-  };
-
-  /**
-   * Updates the current board with a new play
-   *
-   * @param {*} symbol - symbol to place on board
-   * @param {*} rowIndex - row to place symbol
-   * @param {*} colIndex - column to place symbol
-   * @param {*} tile - tile to place symbol
-   */
-  const updateBoard = (symbol, rowIndex, colIndex, tile) => {
-    gameboard.changeTile(rowIndex, colIndex, symbol, tile);
   };
 
   /**
@@ -246,11 +145,10 @@ const game = (() => {
     isPlaying = false;
 
     // Reset current player
-    currentPlayer = player1.getSymbol();
+    currentPlayer = "X";
 
     // Reset turn text
-    const text = document.querySelector("#turn-text");
-    text.textContent = `${player1.getName()}'s turn`;
+    controls.resetTurnText();
 
     // Reset gameboard
     gameboard.resetBoard();
@@ -259,28 +157,13 @@ const game = (() => {
     gameboard.enableTiles();
 
     // Reset versus selection
-    enableButton(document.querySelector("#versus"));
+    controls.enableVersusSelection();
 
     // Reset player selection
-    if (currentOpponent !== playerOpponent) {
-      enablePlayerSelection();
+    if (playingAgainstBot) {
+      controls.enablePlayerSelection();
     } else {
-      disablePlayerSelection();
-    }
-  };
-
-  /**
-   * Displays the current winner
-   *
-   * @param {*} winner - current winner
-   */
-  const showWinner = (winner) => {
-    const text = document.querySelector("#turn-text");
-
-    if (winner === "") {
-      text.textContent = "It's a draw!";
-    } else {
-      text.textContent = `${winner} won!`;
+      controls.disablePlayerSelection();
     }
   };
 
@@ -294,14 +177,14 @@ const game = (() => {
     if (isTie(boardState) || winner !== 0) {
       switch (winner) {
         case 15:
-          showWinner(player1.getName());
+          controls.showWinner(player1);
           break;
         case -15:
-          showWinner(player2.getName());
+          controls.showWinner(player2);
           break;
         default:
           if (isTie(boardState)) {
-            showWinner("");
+            controls.showWinner("");
           }
           break;
       }

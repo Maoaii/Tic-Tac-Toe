@@ -46,9 +46,12 @@ const Gameboard = () => {
    * @param {*} symbol - symbol to change to
    * @returns the new board
    */
-  const changeTile = (row, col, symbol, tile) => {
+  const updateBoard = (symbol, tile) => {
+    const tileRow = tile.getAttribute("data-row");
+    const tileCol = tile.getAttribute("data-col");
+
     tile.textContent = symbol;
-    board[row][col] = symbol;
+    board[tileRow][tileCol] = symbol;
   };
 
   /**
@@ -106,14 +109,22 @@ const Gameboard = () => {
     return freeSpaces;
   };
 
+  const isTileEmpty = (tile) => {
+    const tileRow = tile.getAttribute("data-row");
+    const tileCol = tile.getAttribute("data-col");
+
+    return tile.textContent === "";
+  };
+
   return {
     display,
     getBoard,
-    changeTile,
+    updateBoard,
     resetBoard,
     disableTiles,
     enableTiles,
     getPossibleMoves,
+    isTileEmpty,
   };
 };
 

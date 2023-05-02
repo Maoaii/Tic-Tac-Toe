@@ -14,7 +14,7 @@ const AI = () => {
     // Depending on the choosen bot, play a different move
     switch (difficulty) {
       case easyOpponent:
-        move = getRandomMove();
+        move = getRandomMove(boardState);
 
         break;
 
