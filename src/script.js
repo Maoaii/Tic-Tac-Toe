@@ -1,23 +1,16 @@
 import { Gameboard } from "./gameboard.js";
 import { Player } from "./player.js";
-
+import { AI } from "./ai.js";
+import { MagicBoard } from "./magicBoard.js";
 
 const game = (() => {
   const playerOpponent = "player";
-  const easyOpponent = "easy";
-  const hardOpponent = "hard";
-  const unbeatableOpponent = "unbeatable";
-
   const player1 = Player("Player1", "X");
   const player2 = Player("Player2", "O");
-  // Magic board for win calculation
-  const magicBoard = [
-    [2, 7, 6],
-    [9, 5, 1],
-    [4, 3, 8],
-  ];
+  const ai = AI();
+  const gameboard = Gameboard();
+  const magicBoard = MagicBoard();
 
-  let gameboard = Gameboard();
   let isPlayer1 = true;
   let playerSymbol = "X";
   let opponentSymbol = "O";
@@ -45,6 +38,7 @@ const game = (() => {
     if (isPvP()) {
       disablePlayerSelection();
     } else {
+      ai.setupDifficulty(event.target.value);
       enablePlayerSelection();
     }
   };
@@ -130,33 +124,7 @@ const game = (() => {
    * AI turn, based on opponent choosen
    */
   const botTurn = () => {
-    let move;
-
-    // Depending on the choosen bot, play a different move
-    switch (currentOpponent) {
-      case easyOpponent:
-        move = getRandomMove();
-
-        break;
-
-      case hardOpponent:
-        if (Math.random() > 0.8) {
-          move = getBestMove();
-        } else {
-          move = getRandomMove();
-        }
-
-        break;
-
-      case unbeatableOpponent:
-        move = getBestMove();
-
-        break;
-
-      default:
-        console.log("botTurn: oopsie!");
-        break;
-    }
+    let move = ai.getMove(gameboard.getBoard(), currentPlayer);
 
     const tile = document.querySelector(
       `button[data-row='${move["row"]}'][data-col='${move["col"]}']`
@@ -165,154 +133,6 @@ const game = (() => {
     // Make a play on the square with that index
     updateBoard(currentPlayer, move["row"], move["col"], tile);
     endTurn();
-  };
-
-  /**
-   * @returns a random possible move
-   */
-  const getRandomMove = () => {
-    // Store index of all free spaces
-    let possibleMoves = getPossibleMoves(gameboard.getBoard());
-
-    // Choose a free space randomly
-    return possibleMoves[Math.floor(Math.random() * possibleMoves.length)];
-  };
-
-  /**
-   * @returns the best possible move
-   */
-  const getBestMove = () => {
-    let board = gameboard.getBoard();
-    let bestScore;
-    let bestMove;
-
-    // This player is maximizing
-    if (currentPlayer === player1.getSymbol()) {
-      bestScore = -Infinity;
-
-      // For each possible move, check its' score for the player
-      getPossibleMoves(board).forEach((move) => {
-        // Make the play
-        board[move["row"]][move["col"]] = currentPlayer;
-
-        // Check if the games down the tree are good
-        let score = minimax(board, 0, player2.getSymbol());
-
-        // Remove play
-        board[move["row"]][move["col"]] = "";
-
-        // If the games down the tree show a win, update best move
-        if (score > bestScore) {
-          bestScore = score;
-          bestMove = move;
-        }
-      });
-    }
-    // This player is minimizing
-    else {
-      bestScore = Infinity;
-
-      getPossibleMoves(board).forEach((move) => {
-        // Make the play
-        board[move["row"]][move["col"]] = currentPlayer;
-
-        // Check if the games down the tree are good
-        let score = minimax(board, 0, player1.getSymbol());
-
-        // Remove play
-        board[move["row"]][move["col"]] = "";
-
-        // If the games down the tree show a win, update best move
-        if (score < bestScore) {
-          bestScore = score;
-          bestMove = move;
-        }
-      });
-    }
-
-    return bestMove;
-  };
-
-  /**
-   * @param {*} boardState - current state of the board
-   * @param {*} depth - depth of recursive search
-   * @param {*} player - player maximizing or minimizing the play
-   * @returns the score of the outcome
-   */
-  const minimax = (boardState, depth, player) => {
-    // Check if anyone won
-    let result = checkWinner(boardState);
-    if (result !== 0 || isTie(boardState)) {
-      if (result > 0) {
-        return result - depth;
-      } else {
-        return result + depth;
-      }
-    }
-
-    // This player is maximizing
-    if (player === player1.getSymbol()) {
-      let bestScore = -Infinity;
-
-      // For each possible move, check its' score for the player
-      getPossibleMoves(boardState).forEach((move) => {
-        // Make the play
-        boardState[move.row][move.col] = player;
-
-        // Check if the games down the tree are good
-        let score = minimax(boardState, depth + 1, player2.getSymbol());
-
-        // Remove play
-        boardState[move.row][move.col] = "";
-
-        // If the games down the tree show a win, update best move
-        if (score > bestScore) {
-          bestScore = score;
-        }
-      });
-
-      return bestScore;
-    }
-    // This player is minimizing
-    else {
-      let bestScore = Infinity;
-
-      // For each possible move, check its' score for the player
-      getPossibleMoves(boardState).forEach((move) => {
-        // Make the play
-        boardState[move.row][move.col] = player;
-
-        // Check if the games down the tree are good
-        let score = minimax(boardState, depth + 1, player1.getSymbol());
-
-        // Remove play
-        boardState[move.row][move.col] = "";
-
-        // If the games down the tree show a win, update best move
-        if (score < bestScore) {
-          bestScore = score;
-        }
-      });
-
-      return bestScore;
-    }
-  };
-
-  /**
-   * @param {*} boardState - current state of the board
-   * @returns the possible moves on the current state of the board
-   */
-  const getPossibleMoves = (boardState) => {
-    let freeSpaces = [];
-
-    for (let rowIndex = 0; rowIndex < 3; rowIndex++) {
-      for (let colIndex = 0; colIndex < 3; colIndex++) {
-        if (boardState[rowIndex][colIndex] === "")
-          freeSpaces.push({ row: rowIndex, col: colIndex });
-      }
-    }
-
-    return freeSpaces;
   };
 
   /**
@@ -408,8 +228,7 @@ const game = (() => {
    * @param {*} tile - tile to place symbol
    */
   const updateBoard = (symbol, rowIndex, colIndex, tile) => {
-    tile.textContent = symbol;
-    gameboard.changeTile(rowIndex, colIndex, symbol);
+    gameboard.changeTile(rowIndex, colIndex, symbol, tile);
   };
 
   /**
@@ -451,47 +270,6 @@ const game = (() => {
   };
 
   /**
-   * @param {*} boardState - current state of the board
-   * @returns 15 if player1 wins, -15 if player2 wins, 0 if no one wins
-   */
-  const checkWinner = (boardState) => {
-    let sums = [];
-
-    // Calculate rows
-    for (let rowIndex = 0; rowIndex < 3; rowIndex++) {
-      sums.push(calculateRow(boardState[rowIndex], rowIndex));
-    }
-
-    // Calculate columns
-    for (let colIndex = 0; colIndex < 3; colIndex++) {
-      sums.push(calculateCol(boardState, colIndex));
-    }
-
-    // Calculate diagonal
-    sums.push(calculateDiag(boardState));
-
-    // Calculate anti diagonal
-    sums.push(calculateAntiDiag(boardState));
-
-    // Check if there's any calculation (= 15 || = -15)
-    let winner = 0;
-    sums.forEach((sum) => {
-      switch (sum) {
-        case 15:
-          winner = sum;
-          break;
-        case -15:
-          winner = sum;
-          break;
-        default:
-          break;
-      }
-    });
-
-    return winner;
-  };
-
-  /**
    * Displays the current winner
    *
    * @param {*} winner - current winner
@@ -507,88 +285,11 @@ const game = (() => {
   };
 
   /**
-   * @param {*} row - row to calculate
-   * @param {*} rowIndex - row index to calculate
-   * @returns the magic board sum of that row
-   */
-  const calculateRow = (row, rowIndex) => {
-    let rowSum = 0;
-
-    for (let colIndex = 0; colIndex < 3; colIndex++) {
-      if (row[colIndex] === player1.getSymbol())
-        rowSum += magicBoard[rowIndex][colIndex];
-      else if (row[colIndex] === player2.getSymbol())
-        rowSum -= magicBoard[rowIndex][colIndex];
-    }
-
-    return rowSum;
-  };
-
-  /**
-   * @param {*} boardState - current state of the board
-   * @param {*} rowIndex - column index to calculate
-   * @returns the magic board sum of that row
-   */
-  const calculateCol = (boardState, colIndex) => {
-    let colSum = 0;
-
-    for (let rowIndex = 0; rowIndex < 3; rowIndex++) {
-      const row = boardState[rowIndex];
-
-      if (row[colIndex] === player1.getSymbol())
-        colSum += magicBoard[rowIndex][colIndex];
-      else if (row[colIndex] === player2.getSymbol())
-        colSum -= magicBoard[rowIndex][colIndex];
-    }
-
-    return colSum;
-  };
-
-  /**
-   * @param {*} boardState - current state of the board
-   * @returns the magic board sum of that diag
-   */
-  const calculateDiag = (boardState) => {
-    let diagSum = 0;
-
-    for (let i = 0; i < 3; i++) {
-      const row = boardState[i];
-
-      if (row[i] === player1.getSymbol()) diagSum += magicBoard[i][i];
-      else if (row[i] === player2.getSymbol()) diagSum -= magicBoard[i][i];
-    }
-
-    return diagSum;
-  };
-
-  /**
-   * @param {*} boardState - current state of the board
-   * @returns the magic board sum of that antidiag
-   */
-  const calculateAntiDiag = (boardState) => {
-    let antiDiagSum = 0;
-    let colIndex = 2;
-
-    for (let rowIndex = 0; rowIndex < 3; rowIndex++) {
-      const row = boardState[rowIndex];
-
-      if (row[colIndex] === player1.getSymbol())
-        antiDiagSum += magicBoard[rowIndex][colIndex];
-      else if (row[colIndex] === player2.getSymbol())
-        antiDiagSum -= magicBoard[rowIndex][colIndex];
-
-      colIndex--;
-    }
-
-    return antiDiagSum;
-  };
-
-  /**
    * @param {*} boardState - current state of the board
    * @returns true if game is over: tie or someone wins; false otherwise
    */
   const isGameOver = (boardState) => {
-    const winner = checkWinner(boardState);
+    const winner = magicBoard.checkWinner(boardState);
 
     if (isTie(boardState) || winner !== 0) {
       switch (winner) {
@@ -616,15 +317,8 @@ const game = (() => {
    * @param {*} boardState - current state of the board
    * @returns true if it's a tie, false otherwise
    */
-  const isTie = (boardState) => {
-    for (let i = 0; i < 3; i++) {
-      for (let j = 0; j < 3; j++) {
-        if (boardState[i][j] === "") {
-          return false;
-        }
-      }
-    }
-    return true;
+  const isTie = () => {
+    return gameboard.getPossibleMoves().length === 0;
   };
 
   return {

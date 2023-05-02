@@ -46,7 +46,10 @@ const Gameboard = () => {
    * @param {*} symbol - symbol to change to
    * @returns the new board
    */
-  const changeTile = (row, col, symbol) => (board[row][col] = symbol);
+  const changeTile = (row, col, symbol, tile) => {
+    tile.textContent = symbol;
+    board[row][col] = symbol;
+  };
 
   /**
    * Resets the current board
@@ -86,6 +89,23 @@ const Gameboard = () => {
     });
   };
 
+  /**
+   * @param {*} boardState - current state of the board
+   * @returns the possible moves on the current state of the board
+   */
+  const getPossibleMoves = (boardState = getBoard()) => {
+    let freeSpaces = [];
+
+    for (let rowIndex = 0; rowIndex < 3; rowIndex++) {
+      for (let colIndex = 0; colIndex < 3; colIndex++) {
+        if (boardState[rowIndex][colIndex] === "")
+          freeSpaces.push({ row: rowIndex, col: colIndex });
+      }
+    }
+
+    return freeSpaces;
+  };
+
   return {
     display,
     getBoard,
@@ -93,6 +113,7 @@ const Gameboard = () => {
     resetBoard,
     disableTiles,
     enableTiles,
+    getPossibleMoves,
   };
 };
 
