@@ -345,7 +345,11 @@ const game = (() => {
     // Check if anyone won
     let result = checkWinner(boardState);
     if (result !== 0 || isTie(boardState)) {
-      return result / depth;
+      if (result > 0) {
+        return result - depth;
+      } else {
+        return result + depth;
+      }
     }
 
     // This player is maximizing
