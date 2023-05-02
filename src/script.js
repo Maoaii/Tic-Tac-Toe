@@ -69,7 +69,7 @@ const game = (() => {
     /**
      * @returns the current board
      */
-    const getBoard = () => gameboard;
+    const getBoard = () => [...gameboard];
 
     /**
      * @param {*} row - row of the tile to change
