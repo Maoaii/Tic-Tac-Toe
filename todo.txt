@@ -1,0 +1,7 @@
+- Make AI a separate module
+- Make Gameboard a separate module
+- Move some functions into gameboard
+    - Functions that:
+        - modify the board
+        - get the board
+        - do operations regarding the board
