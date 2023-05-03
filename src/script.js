@@ -79,8 +79,7 @@ const game = (() => {
   const endTurn = () => {
     // Update state variables
     isPlaying = true;
-    currentPlayer =
-      currentPlayer === playerSymbol ? opponentSymbol : playerSymbol;
+    currentPlayer = currentPlayer === player1 ? player2 : player1;
 
     controls.updateTurnText(currentPlayer === player1);
 
@@ -96,7 +95,8 @@ const game = (() => {
 
       return;
     } else if (playingAgainstBot && isOpponentTurn()) {
-      botTurn();
+      let randomResponseTime = ai.getResponseTime();
+      setTimeout(botTurn, randomResponseTime);
     }
   };
 
@@ -144,7 +144,10 @@ const game = (() => {
     isPlaying = false;
 
     // Reset current player
-    currentPlayer = "X";
+    currentPlayer = player1;
+
+    // Reset opponent player
+    opponentSymbol = player2;
 
     // Reset turn text
     controls.resetTurnText();
