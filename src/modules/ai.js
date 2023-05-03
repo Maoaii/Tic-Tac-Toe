@@ -1,12 +1,18 @@
 const easyOpponent = "easy";
 const hardOpponent = "hard";
 const unbeatableOpponent = "unbeatable";
+const minResponseTime = 200;
+const maxResponseTime = 600;
 
 import { MagicBoard } from "./magicBoard.js";
 
 const AI = () => {
   const magicBoard = MagicBoard();
   let difficulty = "";
+
+  const getResponseTime = () => {
+    return Math.floor(Math.random() * maxResponseTime) + minResponseTime;
+  };
 
   const getMove = (boardState, currentPlayer) => {
     let move;
@@ -198,6 +204,7 @@ const AI = () => {
   };
 
   return {
+    getResponseTime,
     setupDifficulty,
     getMove,
   };

@@ -1,6 +1,1 @@
-- Make AI a separate module
-- Move some functions into gameboard
-    - Functions that:
-        - modify the board
-        - get the board
-        - do operations regarding the board
+- After I play a game as "O" agains an AI and reset the game (and start a game as "X"), the AI won't make a move
